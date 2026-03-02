@@ -141,6 +141,8 @@ export function AssessmentModal({
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ message: response.statusText }));
+        console.error('[AssessmentModal] Assessment failed:', err);
+        console.error('[AssessmentModal] Response status:', response.status);
         throw new Error(err.message || 'Assessment failed');
       }
 
@@ -158,6 +160,9 @@ export function AssessmentModal({
       setCitedFiles(result.citedFiles || []);
       setIsComplete(true);
     } catch (err) {
+      console.error('[AssessmentModal] Error caught:', err);
+      console.error('[AssessmentModal] Error message:', err instanceof Error ? err.message : 'Unknown error');
+      console.error('[AssessmentModal] Error stack:', err instanceof Error ? err.stack : 'No stack');
       setError(err instanceof Error ? err.message : 'Assessment failed');
     } finally {
       setIsRunning(false);

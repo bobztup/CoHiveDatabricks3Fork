@@ -155,6 +155,8 @@ export default async function handler(req, res) {
 
         } catch (err) {
           console.error(`[Assessment] Error loading ${kbFile.fileName}:`, err.message);
+          console.error(`[Assessment] Full error:`, err);
+          console.error(`[Assessment] Stack trace:`, err.stack);
           // Re-throw so the whole assessment fails rather than running with incomplete data
           throw err;
         }
