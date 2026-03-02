@@ -1,0 +1,90 @@
+{
+  "id": "launch-discovery",
+  "type": "full-prompt",
+  "name": "Launch Discovery Analysis",
+  "description": "Initial discovery prompt for the Launch hex to understand project goals and requirements",
+  
+  "hexId": "Launch",
+  "trigger": "execute",
+  "assessmentType": null,
+  
+  "sections": [
+    {
+      "id": "header",
+      "title": "Header",
+      "content": "=== COHIVE LAUNCH DISCOVERY ===\n\nYou are helping to launch a new project and understand its requirements.",
+      "order": 1
+    },
+    {
+      "id": "context",
+      "title": "Project Context",
+      "content": "BRAND: {{brand}}\nPROJECT TYPE: {{projectType}}\n\nUSER RESPONSES:\n{{questionResponses}}",
+      "order": 2
+    },
+    {
+      "id": "instructions",
+      "title": "Analysis Instructions",
+      "content": "Based on the information provided, analyze:\n\n1. KEY OBJECTIVES\n   - What are the primary goals of this project?\n   - What success metrics should be defined?\n\n2. STAKEHOLDER CONSIDERATIONS\n   - Who are the key stakeholders?\n   - What are their priorities and concerns?\n\n3. REQUIRED INSIGHTS\n   - What knowledge base files would be most valuable?\n   - Which personas should be consulted?\n   - What competitive intelligence is needed?\n\n4. RECOMMENDED WORKFLOW\n   - Which CoHive hexes should be used?\n   - In what sequence?\n   - What dependencies exist?",
+      "order": 3,
+      "roleSpecific": {
+        "researcher": "Include detailed methodology recommendations and statistical requirements for each suggested hex.",
+        "non-researcher": "Focus on clear, actionable next steps without technical methodology details."
+      }
+    },
+    {
+      "id": "output-format",
+      "title": "Output Format",
+      "content": "Provide your response in the following structure:\n\n## Project Overview\n[2-3 sentence summary]\n\n## Key Objectives\n- Objective 1\n- Objective 2\n- Objective 3\n\n## Recommended Workflow\n1. Step 1: [Hex name] - [Why needed]\n2. Step 2: [Hex name] - [Why needed]\n3. Step 3: [Hex name] - [Why needed]\n\n## Success Metrics\n- Metric 1\n- Metric 2\n- Metric 3\n\n## Next Actions\n1. [Specific action]\n2. [Specific action]\n3. [Specific action]",
+      "order": 4
+    }
+  ],
+  
+  "variables": [
+    "{{brand}}",
+    "{{projectType}}",
+    "{{questionResponses}}"
+  ],
+  
+  "roleSpecific": {
+    "researcher": "Include statistical analysis requirements, sample size recommendations, and research methodology notes.",
+    "non-researcher": "Keep recommendations actionable and jargon-free, focusing on business outcomes."
+  },
+  
+  "chainable": true,
+  "chainOutput": {
+    "format": "structured",
+    "includeMetadata": true,
+    "storeAs": "launchInsights"
+  },
+  "nextPrompts": ["knowledge-base-synthesis", "buyers-unified-analysis"],
+  
+  "examples": [
+    {
+      "scenario": "New product launch for Nike athletic wear",
+      "input": {
+        "brand": "Nike",
+        "projectType": "Product Innovation",
+        "questionResponses": "Launch new sustainable running shoe line targeting eco-conscious millennials"
+      },
+      "expectedOutput": "Structured analysis with objectives, workflow recommendations, and next steps"
+    }
+  ],
+  
+  "metadata": {
+    "lastUpdated": "2025-02-08",
+    "author": "CoHive Team",
+    "version": "1.0",
+    "status": "active",
+    "changeLog": [
+      {
+        "version": "1.0",
+        "date": "2025-02-08",
+        "changes": "Initial creation",
+        "author": "CoHive Team"
+      }
+    ],
+    "relatedPrompts": ["knowledge-base-synthesis", "action-synthesis"],
+    "reviewCycle": "Monthly",
+    "notes": "This is the entry point for all projects. Ensure it provides clear direction for the entire workflow."
+  }
+}

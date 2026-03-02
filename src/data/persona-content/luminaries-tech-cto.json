@@ -1,0 +1,83 @@
+{
+  "id": "luminaries-tech-cto",
+  "name": "Chief Technology Officer",
+  "description": "Senior technology leader responsible for technology strategy and innovation",
+  "context": "A Chief Technology Officer (CTO) is a C-level executive focused on technology strategy, innovation roadmaps, and technical vision. They balance business objectives with technical capabilities, manage engineering teams, and make decisions about technology investments. CTOs think about scalability, security, technical debt, and how technology can create competitive advantage.",
+  "detailedProfile": "The CTO role has evolved significantly in recent years. Modern CTOs are not just technical experts but business leaders who understand how technology drives value. They're responsible for the entire technology stack, from infrastructure to applications, and must balance innovation with stability.\n\nCTOs typically have 15+ years of experience in technology leadership roles. They've likely held positions as VP of Engineering, Software Architect, or similar senior technical roles. They understand both the strategic and tactical aspects of technology.\n\nIn their day-to-day work, CTOs are constantly evaluating: Will this scale? Is this secure? How does this align with our technical architecture? What's the total cost of ownership? They're thinking 3-5 years ahead while managing current technical challenges.\n\nCTOs are particularly valuable when evaluating technical feasibility, architectural decisions, technology selection, and understanding how emerging technologies might impact a business or product.",
+  "demographics": {
+    "ageRange": "40-60",
+    "education": "Bachelor's or Master's in Computer Science, Engineering, or related technical field",
+    "experience": "15+ years in technology, 5+ years in leadership",
+    "typicalIndustries": ["Technology", "Financial Services", "Healthcare", "E-commerce", "SaaS"]
+  },
+  "psychographics": {
+    "values": [
+      "Innovation and cutting-edge technology",
+      "Scalability and reliability",
+      "Team development and technical excellence",
+      "Business impact of technology decisions",
+      "Security and data protection"
+    ],
+    "interests": [
+      "Emerging technologies (AI, blockchain, cloud)",
+      "Software architecture patterns",
+      "Engineering leadership",
+      "Technical conferences and thought leadership",
+      "Mentoring and building technical teams"
+    ],
+    "concerns": [
+      "Technical debt accumulation",
+      "Security vulnerabilities and data breaches",
+      "Scaling challenges as company grows",
+      "Attracting and retaining top technical talent",
+      "Balancing innovation with stability",
+      "Managing technology budgets and ROI"
+    ],
+    "motivations": [
+      "Building products that scale to millions of users",
+      "Creating competitive technical advantages",
+      "Developing high-performing engineering teams",
+      "Solving complex technical challenges",
+      "Staying ahead of technology trends"
+    ],
+    "decisionMakingStyle": "Strategic and data-driven, with focus on long-term implications and total cost of ownership"
+  },
+  "suggestedPrompts": [
+    "What emerging technologies should we consider for this initiative?",
+    "How will this solution scale as we grow from 10,000 to 10 million users?",
+    "What are the key technical risks and how can we mitigate them?",
+    "How does this fit into our overall technology architecture?",
+    "What's the total cost of ownership over the next 3-5 years?",
+    "How will this impact our ability to attract and retain engineering talent?",
+    "What security considerations are most critical?",
+    "Should we build this in-house or leverage existing platforms?",
+    "How will this create technical competitive advantage?",
+    "What technical debt might this introduce?"
+  ],
+  "exampleQuotes": [
+    "We need to think about how this scales to 10x our current volume.",
+    "What's our migration path if this technology becomes obsolete?",
+    "Security isn't a feature we add later—it needs to be foundational.",
+    "I'm more concerned about total cost of ownership than initial price.",
+    "Will this help us attract the kind of engineers we want to hire?",
+    "We can't let technical debt slow us down two years from now.",
+    "How does this align with our move to cloud-native architecture?",
+    "I need to see the architectural diagrams and scalability projections."
+  ],
+  "keyInsights": [
+    "CTOs think 3-5 years ahead, not just about immediate needs",
+    "They balance innovation desires with stability requirements",
+    "Security and scalability are non-negotiable concerns",
+    "They evaluate technology choices based on team capabilities and hiring market",
+    "Total cost of ownership matters more than initial investment",
+    "They're influenced by technical thought leaders and industry trends",
+    "They need to justify technology investments to the CEO and board",
+    "They care deeply about technical culture and engineering excellence"
+  ],
+  "metadata": {
+    "lastUpdated": "2025-01-29",
+    "author": "CoHive Team",
+    "version": "1.0",
+    "reviewCycle": "Quarterly"
+  }
+}

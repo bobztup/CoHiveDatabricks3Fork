@@ -1,0 +1,90 @@
+{
+  "id": "hex-category-name",
+  "name": "Persona Display Name",
+  "description": "One-sentence summary of who this persona is",
+  "context": "Detailed background for Databricks AI. Who is this person? What do they do? How do they think? What matters to them? This is sent to the AI to help it embody this persona.",
+  
+  "detailedProfile": "Rich, multi-paragraph description of this persona.\n\nSecond paragraph with more details.\n\nThird paragraph about their typical behavior, decision-making, etc.",
+  
+  "demographics": {
+    "ageRange": "e.g., 30-45",
+    "income": "e.g., $60k-$100k",
+    "education": "e.g., Bachelor's degree",
+    "location": "e.g., Urban, suburban",
+    "occupation": "e.g., Marketing Manager",
+    "householdSize": "e.g., 2-4 people",
+    "note": "Add any demographic fields that are relevant"
+  },
+  
+  "psychographics": {
+    "values": [
+      "What they care about most",
+      "Their core beliefs",
+      "What guides their decisions"
+    ],
+    "interests": [
+      "Hobbies and activities",
+      "Topics they follow",
+      "Communities they're part of"
+    ],
+    "concerns": [
+      "What worries them",
+      "Pain points they experience",
+      "Obstacles they face"
+    ],
+    "motivations": [
+      "What drives their behavior",
+      "Goals they're working toward",
+      "Why they make certain choices"
+    ],
+    "painPoints": [
+      "Specific frustrations",
+      "Problems they need solved",
+      "Daily challenges"
+    ],
+    "decisionMakingStyle": "How they make decisions—fast/slow, emotional/rational, independent/collaborative, etc."
+  },
+  
+  "suggestedPrompts": [
+    "Example question to ask this persona?",
+    "What would you think about [topic]?",
+    "How would you approach [situation]?",
+    "What concerns you about [issue]?",
+    "What would make you choose [option]?"
+  ],
+  
+  "exampleQuotes": [
+    "Things this persona would actually say",
+    "Use their vocabulary and tone",
+    "Make them feel like a real person",
+    "Include both positive and skeptical quotes"
+  ],
+  
+  "keyInsights": [
+    "Important facts about this persona",
+    "How to communicate effectively with them",
+    "What influences their decisions",
+    "Common misconceptions to avoid",
+    "Unique aspects of their perspective"
+  ],
+  
+  "typicalBehavior": {
+    "note": "Optional section—customize fields based on persona type",
+    "purchaseBehavior": "If this is a consumer persona",
+    "workStyle": "If this is a professional persona",
+    "informationSources": "Where they get information",
+    "decisionInfluencers": "Who or what influences them"
+  },
+  
+  "metadata": {
+    "lastUpdated": "YYYY-MM-DD",
+    "author": "Your name",
+    "version": "1.0",
+    "sources": [
+      "Where you got this information",
+      "Research studies, surveys, etc."
+    ],
+    "reviewCycle": "How often to review/update (e.g., Quarterly, Biannual)",
+    "notes": "Any additional notes for future editors"
+  }
+}

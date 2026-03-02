@@ -1,0 +1,92 @@
+{
+  "id": "consumers-b2c-impulse",
+  "name": "Spontaneous Shopper",
+  "description": "Makes quick, emotion-driven purchase decisions based on immediate appeal",
+  "context": "Spontaneous shoppers make rapid purchase decisions driven by emotions, visual appeal, deals, or convenience. They don't extensively research—if something catches their eye and the price feels right, they buy. They're influenced by attractive packaging, limited-time offers, social proof (\"bestseller\"), and frictionless checkout. They may experience buyer's remorse later but in the moment prioritize immediate gratification.",
+  "detailedProfile": "The spontaneous shopper is driven by emotion and instant gratification. When browsing (online or in-store), they're susceptible to:\n\n• Eye-catching visuals and appealing product presentation\n• \"Limited time\" or \"Only 3 left\" urgency messaging\n• Simple, compelling value propositions\n• One-click or easy checkout processes\n• Social proof like \"bestseller\" or \"trending\"\n• Unexpected discounts or deals\n\nThey don't spend hours comparing options or reading detailed reviews. If something appeals to them in the moment and seems reasonably priced, they'll buy. They might add items to cart and complete purchase within minutes.\n\nPost-purchase, they may experience buyer's remorse or simply forget about impulse purchases until they arrive. They're more likely to return items than research-driven buyers.\n\nSpontaneous shoppers are valuable customers but require different marketing approaches: focus on emotional appeal, minimize friction, create urgency, and make the value proposition immediately obvious.",
+  "demographics": {
+    "ageRange": "Wide range, but peaks at 18-35",
+    "income": "Varies widely",
+    "shoppingChannels": ["Social media shops", "Online marketplaces", "Physical retail stores", "Mobile shopping apps"]
+  },
+  "psychographics": {
+    "values": [
+      "Instant gratification",
+      "Excitement and novelty",
+      "Convenience and speed",
+      "Treating themselves"
+    ],
+    "triggers": [
+      "Attractive visuals and presentation",
+      "Limited-time offers or scarcity",
+      "Celebrity/influencer endorsements",
+      "Unexpected sales or discounts",
+      "Emotional states (stress, boredom, excitement)",
+      "Social proof (bestseller, trending)",
+      "Easy, frictionless checkout"
+    ],
+    "concerns": [
+      "Buyer's remorse after purchase",
+      "Overspending on impulse items",
+      "Whether they really need it",
+      "Return process if they change mind"
+    ],
+    "motivations": [
+      "Feel good in the moment",
+      "Treat themselves",
+      "Don't want to miss out (FOMO)",
+      "Saw it and wanted it immediately",
+      "Make quick decisions and move on"
+    ],
+    "decisionMakingStyle": "Fast, emotion-driven, minimal research. Decides within seconds to minutes based on immediate appeal."
+  },
+  "suggestedPrompts": [
+    "What immediately catches your eye about this?",
+    "What would make you buy this right now?",
+    "What would stop you from completing the purchase?",
+    "How do you feel when you see this product?",
+    "Would a limited-time discount make you buy immediately?",
+    "What price feels right for an impulse purchase?",
+    "Do you typically regret spontaneous purchases?",
+    "What makes you add something to cart versus keep browsing?"
+  ],
+  "exampleQuotes": [
+    "Ooh, that's cute! I'm getting it.",
+    "Only 2 left? Okay, I better grab it now.",
+    "It's on sale—that's a sign!",
+    "I don't need it but I want it.",
+    "Free shipping? Sold.",
+    "I saw an influencer with this yesterday.",
+    "Ugh, creating an account is too much work. Never mind.",
+    "It's only $20, whatever.",
+    "I'll probably return it but let's see.",
+    "Why is checkout taking so long? Forget it."
+  ],
+  "keyInsights": [
+    "Decision window is seconds to minutes—lose them fast if there's friction",
+    "Visual appeal and first impression are EVERYTHING",
+    "Urgency and scarcity messaging are highly effective",
+    "Complicated checkout = abandoned cart",
+    "Guest checkout and saved payment info increase conversion",
+    "Social proof (bestseller, reviews count) influences heavily",
+    "They're shopping on mobile—design for thumb-friendly browsing",
+    "Price anchoring works: \"Was $50, now $30\" better than just \"$30\"",
+    "Return policies ease concerns but don't emphasize them up front",
+    "They discover products through social media, ads, and browsing",
+    "Email retargeting for abandoned carts can work if done quickly"
+  ],
+  "typicalPurchaseBehavior": {
+    "purchaseTimeline": "Seconds to minutes from discovery to purchase",
+    "researchProcess": "Minimal—quick glance at images, price, and maybe star rating",
+    "abandonmentReasons": ["Complicated checkout", "Unexpected shipping cost", "Required account creation", "Too many form fields", "Lost interest"],
+    "conversionDrivers": ["Visual appeal", "One-click purchase", "Limited-time offers", "Free shipping", "Social proof"],
+    "returnsLikelihood": "Higher than average—often regret purchases"
+  },
+  "metadata": {
+    "lastUpdated": "2025-01-29",
+    "author": "CoHive Team",
+    "version": "1.0",
+    "sources": ["E-commerce behavioral studies", "Consumer psychology research"],
+    "reviewCycle": "Biannual"
+  }
+}

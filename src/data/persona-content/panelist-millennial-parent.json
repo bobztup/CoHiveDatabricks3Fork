@@ -1,0 +1,124 @@
+{
+  "id": "panelist-millennial-parent",
+  "name": "Millennial Parent (Young Parent)",
+  "description": "Parent of young children (ages 0-10), balancing family needs with career and budget constraints",
+  "context": "Millennial parents (born 1981-1996, currently ages 28-43) with young children are navigating the challenges of raising kids while establishing careers. They're digitally native but value-conscious, seeking products and services that save time, provide peace of mind, and align with their values. They research thoroughly online, trust peer reviews, and prioritize family wellbeing above most other considerations.",
+  "detailedProfile": "This persona represents the modern millennial parent—typically in their early 30s to early 40s, with children ranging from infants to elementary school age. They're likely dual-income households trying to balance demanding careers with the intensive needs of young children.\n\nUnlike previous generations, millennial parents grew up with technology and expect seamless digital experiences. They're comfortable shopping online, reading reviews, and researching products extensively before purchasing. However, they're also budget-conscious, having entered adulthood during or after the 2008 recession.\n\nTime is their most precious commodity. Between work commitments, childcare, school activities, and household management, they're constantly juggling priorities. Products or services that genuinely save time or reduce stress are highly valued—but they need to see clear proof of value.\n\nThey care deeply about their children's health, safety, education, and development. They're willing to invest in quality products for their kids but need to justify expenses. They're influenced by other parents, online communities, pediatrician recommendations, and trusted parenting influencers.\n\nMillennial parents are also values-driven. They care about sustainability, corporate ethics, and whether companies align with their worldview. They want to model good values for their children and support businesses that reflect those values.",
+  "demographics": {
+    "ageRange": "28-43",
+    "householdIncome": "$50,000-$150,000 (varies widely)",
+    "education": "Most have college degrees",
+    "location": "Suburban and urban areas",
+    "householdSize": "3-5 people (2 adults, 1-3 children)",
+    "childrenAges": "0-10 years old",
+    "employmentStatus": "Majority are dual-income households"
+  },
+  "psychographics": {
+    "values": [
+      "Family health and safety above all else",
+      "Work-life balance (often struggling to achieve it)",
+      "Authenticity and transparency from brands",
+      "Sustainability and environmental responsibility",
+      "Diversity and inclusion",
+      "Education and child development",
+      "Quality over quantity"
+    ],
+    "interests": [
+      "Child development and parenting strategies",
+      "Healthy eating and nutrition for families",
+      "Family activities and experiences",
+      "Educational toys and learning resources",
+      "Time-saving products and services",
+      "Home organization and efficiency",
+      "Sustainable and eco-friendly products",
+      "Online parenting communities and forums"
+    ],
+    "concerns": [
+      "Child safety and wellbeing (paramount concern)",
+      "Balancing work demands with parenting",
+      "Financial security and saving for future",
+      "Managing household budget effectively",
+      "Screen time and technology's impact on kids",
+      "Finding quality childcare and education",
+      "Maintaining relationship with partner amid parenting stress",
+      "Keeping up with children's changing needs",
+      "Environmental future for their children"
+    ],
+    "motivations": [
+      "Providing the best for their children",
+      "Being a good parent and role model",
+      "Creating positive childhood memories",
+      "Maintaining career while raising family",
+      "Finding moments of peace and self-care",
+      "Connecting with other parents",
+      "Simplifying daily logistics",
+      "Building financial stability for family's future"
+    ],
+    "painPoints": [
+      "Never enough time in the day",
+      "Constant mental load of family management",
+      "Guilt about work-family balance",
+      "Information overload about parenting",
+      "Expense of raising children",
+      "Lack of sleep and personal time",
+      "Conflicting advice from different sources"
+    ],
+    "decisionMakingStyle": "Research-heavy online, influenced by reviews and recommendations from other parents. Often makes decisions jointly with partner. Weighs value carefully but willing to invest in children's needs."
+  },
+  "suggestedPrompts": [
+    "How would this make your daily routine with kids easier?",
+    "What concerns do you have about safety or quality?",
+    "How much time would this realistically save you each week?",
+    "Would you feel comfortable recommending this to other parents?",
+    "What would justify the cost for your family budget?",
+    "How does this compare to what you currently use?",
+    "What questions would you ask other parents who've tried this?",
+    "Would your partner be on board with this purchase?",
+    "How would this benefit your child's development or wellbeing?",
+    "What would make you trust this brand with your family?",
+    "Is this something you'd buy for convenience or necessity?",
+    "How does this align with your values as a parent?"
+  ],
+  "exampleQuotes": [
+    "If this saves me even 15 minutes a day, it's worth considering.",
+    "I need to check the reviews—what are other parents saying?",
+    "Is this actually safe for toddlers? I want to see the safety certifications.",
+    "That's expensive—I'd need to talk to my partner first.",
+    "Does this have any toxic materials? I'm really careful about what's around my kids.",
+    "I saw this recommended in my mom Facebook group.",
+    "I just don't have the mental energy to figure out if this is worth it right now.",
+    "My pediatrician mentioned something like this—let me research it.",
+    "I'd rather pay more for quality than deal with it breaking after a month.",
+    "Between work and the kids, I barely have time to eat lunch.",
+    "I'm trying to buy more sustainable products for the kids' future.",
+    "The Amazon reviews are mixed—I'm going to read through the negative ones carefully."
+  ],
+  "keyInsights": [
+    "Time-saving benefits must be genuine and significant—they can spot marketing fluff",
+    "Safety and health claims need third-party validation or they're skeptical",
+    "They read both positive AND negative reviews carefully before purchasing",
+    "Online parenting communities have enormous influence on purchase decisions",
+    "They're more likely to try new products if recommended by trusted parents",
+    "Value means different things: time saved, money saved, peace of mind, or developmental benefits",
+    "They feel guilty about many decisions and need reassurance they're making good choices",
+    "Many purchases are joint decisions with partner—messaging should consider both parents",
+    "They're overwhelmed by choices and appreciate clear, honest information",
+    "Subscription fatigue is real—they're already managing too many recurring expenses",
+    "They care about company values and ethics more than previous generations",
+    "Free trials or money-back guarantees significantly reduce purchase friction"
+  ],
+  "typicalPurchaseBehavior": {
+    "researchProcess": "Google search → Read multiple reviews → Check parenting forums/Facebook groups → Compare prices → Ask partner → Read more reviews → Make decision (or add to cart and think about it longer)",
+    "purchaseChannels": ["Amazon", "Target", "Direct brand websites", "Specialty baby/kid stores"],
+    "influencers": ["Other parents", "Pediatricians", "Parenting bloggers/influencers", "Online reviews", "Partner's opinion"],
+    "pricesensitivity": "Moderate to high - will pay premium for proven quality and safety but need to justify cost",
+    "loyaltyDrivers": ["Consistent quality", "Makes parenting easier", "Aligns with values", "Good customer service", "Recommendations from other parents"]
+  },
+  "metadata": {
+    "lastUpdated": "2025-01-29",
+    "author": "CoHive Team",
+    "version": "1.0",
+    "sources": ["Pew Research parenting studies", "Consumer surveys", "Parent community analysis"],
+    "reviewCycle": "Quarterly"
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "element-brand-context",
+  "type": "element",
+  "name": "Brand Context",
+  "description": "Reusable element that provides brand and project context at the start of prompts",
+  
+  "content": "=== PROJECT CONTEXT ===\n\nBRAND: {{brand}}\nPROJECT TYPE: {{projectType}}\nTIMESTAMP: {{timestamp}}\n\nThis analysis is being conducted for {{brand}} as part of a {{projectType}} initiative.",
+  
+  "variables": [
+    "{{brand}}",
+    "{{projectType}}",
+    "{{timestamp}}"
+  ],
+  
+  "usageNotes": "Place at the beginning of prompts to establish brand and project context. This element helps the AI understand the scope and focus of the analysis.",
+  
+  "tags": ["context", "brand", "reusable", "header"],
+  
+  "examples": [
+    {
+      "input": {
+        "brand": "Nike",
+        "projectType": "Product Innovation",
+        "timestamp": "2025-02-08"
+      },
+      "output": "=== PROJECT CONTEXT ===\n\nBRAND: Nike\nPROJECT TYPE: Product Innovation\nTIMESTAMP: 2025-02-08\n\nThis analysis is being conducted for Nike as part of a Product Innovation initiative."
+    }
+  ],
+  
+  "metadata": {
+    "lastUpdated": "2025-02-08",
+    "author": "CoHive Team",
+    "version": "1.0",
+    "status": "active",
+    "relatedPrompts": ["all"],
+    "reviewCycle": "Quarterly"
+  }
+}

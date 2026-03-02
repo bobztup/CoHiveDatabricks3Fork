@@ -1,0 +1,213 @@
+{
+  "id": "role-specialty",
+  "type": "agent",
+  "role": "Agent Role Title",
+  "specialty": "Specific domain or focus area",
+  "description": "Brief description of what this agent does and when to use it",
+  
+  "_comment_identity": "Define who this agent is",
+  "identity": {
+    "name": "Display name for the agent",
+    "background": "Professional background and experience (e.g., '15+ years in competitive analysis')",
+    "expertise": [
+      "Area of expertise 1",
+      "Area of expertise 2",
+      "Area of expertise 3"
+    ],
+    "perspective": "How this agent views problems (e.g., 'Data-driven', 'Creative', 'Strategic')",
+    "personality": "Optional: Personality traits (e.g., 'Analytical, detail-oriented, strategic')"
+  },
+  
+  "_comment_capabilities": "What can this agent do?",
+  "capabilities": {
+    "analysis": [
+      "Type of analysis 1",
+      "Type of analysis 2"
+    ],
+    "insights": [
+      "Type of insights 1",
+      "Type of insights 2"
+    ],
+    "outputs": [
+      "Output format 1",
+      "Output format 2"
+    ],
+    "tools": [
+      "Framework or tool 1",
+      "Framework or tool 2"
+    ]
+  },
+  
+  "_comment_behavior": "How does this agent behave?",
+  "behavior": {
+    "communicationStyle": "How the agent communicates (e.g., 'Clear, data-backed, strategic')",
+    "analyticalApproach": "How the agent analyzes (e.g., 'Systematic comparison and pattern recognition')",
+    "decisionFramework": "How decisions are made (e.g., 'Evidence-based with strategic foresight')",
+    "defaultPerspective": "Default viewpoint (e.g., 'How does this position us vs. competitors?')",
+    "tone": "Communication tone (e.g., 'Professional', 'Friendly', 'Authoritative')"
+  },
+  
+  "_comment_system_prompt": "The core prompt that defines this agent's behavior",
+  "systemPrompt": "You are a [ROLE] with [EXPERIENCE/BACKGROUND].\n\nEXPERTISE:\n- [Area 1]\n- [Area 2]\n- [Area 3]\n\nAPPROACH:\nWhen [TASK], you:\n1. [Step 1]\n2. [Step 2]\n3. [Step 3]\n\nCOMMUNICATION STYLE:\n- [Style 1]\n- [Style 2]\n- [Style 3]\n\nCONSTRAINTS:\n- Always [required behavior]\n- Never [prohibited behavior]\n- Focus on [priority]\n\nOUTPUT FORMAT:\n[Specify structure of responses]",
+  
+  "_comment_knowledge": "What does this agent know?",
+  "contextualKnowledge": [
+    "Domain knowledge area 1",
+    "Framework or methodology 1",
+    "Industry insight 1",
+    "Best practice 1"
+  ],
+  
+  "_comment_tools": "What tools and frameworks can this agent use?",
+  "tools": [
+    "Tool or framework 1 (e.g., 'SWOT analysis')",
+    "Tool or framework 2 (e.g., 'Porter's Five Forces')",
+    "Tool or framework 3 (e.g., 'Customer journey mapping')"
+  ],
+  
+  "_comment_use_cases": "When to use this agent",
+  "useCases": [
+    "Use case 1 (e.g., 'Competitors hex analysis')",
+    "Use case 2 (e.g., 'Strategic planning workshops')",
+    "Use case 3 (e.g., 'Market opportunity assessment')"
+  ],
+  
+  "_comment_examples": "Example queries this agent can handle",
+  "exampleQueries": [
+    "Example query 1",
+    "Example query 2",
+    "Example query 3"
+  ],
+  
+  "_comment_constraints": "What are this agent's limitations?",
+  "constraints": {
+    "limitations": [
+      "What this agent cannot do",
+      "Areas outside expertise"
+    ],
+    "scope": "Boundaries of expertise (e.g., 'Consumer markets only, not B2B')",
+    "caveats": [
+      "Important consideration 1",
+      "Important consideration 2"
+    ],
+    "requiresInput": [
+      "Required input 1 (e.g., 'Market research files')",
+      "Required input 2 (e.g., 'Competitive data')"
+    ]
+  },
+  
+  "_comment_integrations": "Where this agent is used",
+  "integrations": {
+    "hexes": [
+      "Hex 1 that uses this agent",
+      "Hex 2 that uses this agent"
+    ],
+    "workflows": [
+      "Workflow 1 that invokes this agent",
+      "Workflow 2 that invokes this agent"
+    ],
+    "dependencies": [
+      "What this agent needs to function (e.g., 'Knowledge Base files')",
+      "Other agents it works with"
+    ],
+    "outputs": {
+      "format": "structured|text|mixed",
+      "handoffTo": ["Next agent in workflow"],
+      "storedAs": "variable-name-for-outputs"
+    }
+  },
+  
+  "_comment_adaptations": "How this agent adapts to context",
+  "adaptations": {
+    "userRole": {
+      "researcher": "How behavior changes for researchers",
+      "non-researcher": "How behavior changes for non-researchers"
+    },
+    "projectType": {
+      "War Games": "Special behavior for War Games projects",
+      "Brand Refresh": "Special behavior for Brand Refresh projects"
+    },
+    "assessmentType": {
+      "assess": "Behavior for assessment tasks",
+      "recommend": "Behavior for recommendation tasks",
+      "unified": "Behavior for unified tasks"
+    }
+  },
+  
+  "_comment_testing": "Testing and validation",
+  "testing": {
+    "testScenarios": [
+      {
+        "scenario": "Test scenario 1",
+        "input": "Sample input",
+        "expectedBehavior": "What should happen",
+        "successCriteria": ["Criterion 1", "Criterion 2"]
+      }
+    ],
+    "performanceMetrics": {
+      "relevance": "How to measure relevance",
+      "accuracy": "How to measure accuracy",
+      "actionability": "How to measure actionability"
+    },
+    "lastTested": "YYYY-MM-DD",
+    "testResults": "Summary of test results"
+  },
+  
+  "_comment_collaboration": "How this agent works with others",
+  "collaboration": {
+    "worksWellWith": [
+      "agent-id-1",
+      "agent-id-2"
+    ],
+    "conflictsWith": [
+      "agent-id-3 (reason)"
+    ],
+    "handoffProtocol": "How to pass work to/from this agent"
+  },
+  
+  "_comment_configuration": "Advanced configuration options",
+  "configuration": {
+    "temperature": 0.7,
+    "maxTokens": 2000,
+    "stopSequences": [],
+    "inputModes": {
+      "text": true,
+      "files": ["pdf", "docx", "xlsx"],
+      "images": false,
+      "voice": false
+    },
+    "outputModes": {
+      "text": true,
+      "structured": true,
+      "visual": false
+    }
+  },
+  
+  "_comment_metadata": "Version control and documentation",
+  "metadata": {
+    "lastUpdated": "YYYY-MM-DD",
+    "author": "Your Name",
+    "version": "1.0",
+    "status": "draft|active|beta|deprecated",
+    "changeLog": [
+      {
+        "version": "1.0",
+        "date": "YYYY-MM-DD",
+        "changes": "Initial creation",
+        "author": "Name",
+        "impact": "What changed and why"
+      }
+    ],
+    "relatedAgents": ["agent-id-1", "agent-id-2"],
+    "relatedPersonas": ["persona-id-1"],
+    "relatedPrompts": ["prompt-id-1"],
+    "sources": ["Where agent design came from"],
+    "reviewCycle": "How often to review (e.g., Monthly, Quarterly)",
+    "notes": "Any additional notes for future editors",
+    "performanceHistory": {
+      "averageRating": 4.5,
+      "totalExecutions": 0,
+      "successRate": 0.95
+    }
+  }
+}

@@ -1,0 +1,126 @@
+{
+  "id": "unique-prompt-id",
+  "type": "full-prompt or element",
+  "name": "Display Name for This Prompt",
+  "description": "Brief description of what this prompt does and when to use it",
+  
+  "_comment_hex_info": "For full prompts, specify which hex uses this",
+  "hexId": "Launch|Buyers|Competitors|etc.",
+  "trigger": "execute|save|download|recommend",
+  "assessmentType": "assess|recommend|unified",
+  
+  "_comment_sections": "Full prompts have sections that combine to form the complete prompt",
+  "sections": [
+    {
+      "id": "header",
+      "title": "Section Title (for documentation)",
+      "content": "The actual text content that goes in the prompt.\n\nUse \\n for newlines.\n\nInclude {{variables}} as needed.",
+      "order": 1,
+      "conditional": "Optional: JavaScript expression like 'projectType === \"War Games\"'",
+      "roleSpecific": {
+        "researcher": "Extra content shown only to researchers",
+        "non-researcher": "Simplified content for non-researchers"
+      }
+    },
+    {
+      "id": "instructions",
+      "title": "Main Instructions",
+      "content": "Detailed instructions for the AI on what to analyze and how.",
+      "order": 2
+    },
+    {
+      "id": "output-format",
+      "title": "Output Format",
+      "content": "Specify exactly how you want the response formatted:\n\n## Heading 1\n[Content here]\n\n## Heading 2\n[More content]",
+      "order": 3
+    }
+  ],
+  
+  "_comment_element": "For elements only (not full prompts)",
+  "content": "For elements, put reusable content here instead of sections",
+  "usageNotes": "How and where to use this element",
+  "tags": ["categorization", "tags", "for", "organization"],
+  
+  "_comment_variables": "List all variables used in this prompt",
+  "variables": [
+    "{{brand}}",
+    "{{projectType}}",
+    "{{selectedFiles}}",
+    "{{selectedPersonas}}",
+    "{{questionResponses}}",
+    "{{assessmentType}}",
+    "{{timestamp}}",
+    "{{userRole}}"
+  ],
+  
+  "_comment_role": "Optional role-specific content for full prompts",
+  "roleSpecific": {
+    "researcher": "Additional detailed content for researchers - statistical analysis, methodology, etc.",
+    "non-researcher": "Simplified, actionable content for non-researchers - clear recommendations, no jargon"
+  },
+  
+  "_comment_chaining": "Optional configuration for multi-step workflows",
+  "chainable": true,
+  "chainOutput": {
+    "format": "structured|text",
+    "includeMetadata": true,
+    "storeAs": "variable-name-for-next-prompt"
+  },
+  "nextPrompts": ["prompt-id-that-can-follow"],
+  "dependencies": ["prompt-id-that-must-run-first"],
+  
+  "_comment_conditionals": "Examples of conditional logic",
+  "conditionalSections": {
+    "examples": [
+      "projectType === 'War Games'",
+      "assessmentType.includes('unified')",
+      "selectedFiles && selectedFiles.length > 0",
+      "userRole === 'researcher'",
+      "selectedPersonas && selectedPersonas.length >= 2"
+    ]
+  },
+  
+  "_comment_examples": "Example usage and expected output",
+  "examples": [
+    {
+      "scenario": "Example scenario description",
+      "input": {
+        "brand": "Nike",
+        "projectType": "Product Innovation",
+        "selectedFiles": ["research.pdf", "personas.pdf"]
+      },
+      "expectedOutput": "What the AI should generate"
+    }
+  ],
+  
+  "_comment_testing": "Testing and validation notes",
+  "testing": {
+    "testCases": [
+      "Test with minimum required fields",
+      "Test with all optional fields",
+      "Test role-specific variations"
+    ],
+    "knownIssues": ["Any known limitations or edge cases"],
+    "lastTested": "YYYY-MM-DD"
+  },
+  
+  "_comment_metadata": "Version control and documentation",
+  "metadata": {
+    "lastUpdated": "YYYY-MM-DD",
+    "author": "Your Name",
+    "version": "1.0",
+    "status": "draft|active|deprecated",
+    "changeLog": [
+      {
+        "version": "1.0",
+        "date": "YYYY-MM-DD",
+        "changes": "Initial creation",
+        "author": "Name"
+      }
+    ],
+    "relatedPrompts": ["other-prompt-ids"],
+    "sources": ["Where the prompt logic came from"],
+    "reviewCycle": "How often to review (e.g., Monthly, Quarterly)",
+    "notes": "Any additional notes for future editors"
+  }
+}
