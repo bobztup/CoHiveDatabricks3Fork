@@ -1315,6 +1315,7 @@ export default function ProcessWireframe() {
     setActiveStepId('Enter');
     setShowValidation(false);
     setIdeasFiles([]);
+    setHexExecutions({});
     
     // Clear localStorage (but keep templates, research files, and project files)
     localStorage.removeItem('cohive_responses');

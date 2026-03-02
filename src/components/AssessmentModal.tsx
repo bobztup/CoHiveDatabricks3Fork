@@ -185,6 +185,81 @@ export function AssessmentModal({
     }
   }, [rounds, currentRound]);
 
+  // Handle text selection changes (better for Mac trackpad)
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      // Small delay to let the selection settle
+      setTimeout(() => {
+        const selection = window.getSelection();
+        if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+          setFloatingBtn(null);
+          return;
+        }
+        const text = selection.toString().trim();
+        if (text.length < 10) {
+          setFloatingBtn(null);
+          return;
+        }
+
+        // Check if selection is inside the modal content
+        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        if (!range || !contentRef.current?.contains(range.commonAncestorContainer)) {
+          setFloatingBtn(null);
+          return;
+        }
+
+        const allContent = rounds.map(r => r.content).join('\n');
+        const selectionContext = text.substring(0, 100);
+        const textIdx = allContent.indexOf(selectionContext);
+
+        let fileId: string | null = null;
+        let fileName: string | null = null;
+
+        if (textIdx >= 0) {
+          const citationRegex = /\[Source:\s*([^\]]+)\]/g;
+          let match: RegExpExecArray | null;
+          let lastCitationName: string | null = null;
+          while ((match = citationRegex.exec(allContent)) !== null) {
+            if (match.index < textIdx + selectionContext.length) {
+              lastCitationName = match[1].trim();
+            }
+          }
+          if (lastCitationName) {
+            const cited = citedFiles.find(f => f.fileName?.toLowerCase() === lastCitationName!.toLowerCase());
+            fileId = cited?.fileId || null;
+            fileName = lastCitationName;
+          }
+        }
+
+        const rect = range.getBoundingClientRect();
+        const modalRect = contentRef.current?.getBoundingClientRect();
+        if (modalRect) {
+          setFloatingBtn({ x: rect.left - modalRect.left + rect.width / 2, y: rect.top - modalRect.top - 52, text, fileId, fileName });
+        }
+      }, 50);
+    };
+
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => document.removeEventListener('selectionchange', handleSelectionChange);
+  }, [rounds, citedFiles]);
+
+  // Handle keyboard shortcuts (Enter or Cmd+S to save gem)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (floatingBtn && (e.key === 'Enter' || (e.key === 's' && (e.metaKey || e.ctrlKey)))) {
+        e.preventDefault();
+        handleSaveGem();
+      }
+      if (e.key === 'Escape') {
+        setFloatingBtn(null);
+        window.getSelection()?.removeAllRanges();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [floatingBtn]);
+
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     const selection = window.getSelection();
     if (!selection || selection.isCollapsed || !selection.toString().trim()) {
@@ -227,7 +302,10 @@ export function AssessmentModal({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (!target.closest('[data-gem-button]')) setFloatingBtn(null);
+    if (!target.closest('[data-gem-button]')) {
+      // Don't clear immediately - let selectionchange handle it
+      // This prevents the button from disappearing when clicking on selected text
+    }
   }, []);
 
   const handleSaveGem = async () => {
@@ -354,7 +432,7 @@ export function AssessmentModal({
       {/* Progress */}
       {isRunning && (
         <div className="bg-purple-50 border-b border-purple-200 px-6 py-3 flex items-center gap-3 flex-shrink-0">
-          <Loader className="w-4 h-4 animate-spin text-purple-600" />
+          <img src={gemIcon} alt="working" className="w-4 h-4 animate-spin" />
           <span className="text-purple-800 text-sm font-medium">
             {currentRound > 0 ? `Running Round ${currentRound}…` : 'Starting collaboration…'}
           </span>
@@ -419,7 +497,7 @@ export function AssessmentModal({
                     <span className={`font-medium text-sm ${isLast ? 'text-purple-900' : 'text-gray-700'}`}>
                       Round {round.roundNumber}{isLast && isComplete ? ' — Final' : ''}
                     </span>
-                    {isLast && isRunning && <Loader className="w-3.5 h-3.5 animate-spin text-purple-500" />}
+                    {isLast && isRunning && <img src={gemIcon} alt="working" className="w-3.5 h-3.5 animate-spin" />}
                   </div>
                   {isCollapsed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                 </button>
@@ -434,7 +512,7 @@ export function AssessmentModal({
 
           {isRunning && rounds.length > 0 && (
             <div className="bg-white border-2 border-dashed border-purple-200 rounded-lg px-4 py-3 flex items-center gap-3">
-              <Loader className="w-4 h-4 animate-spin text-purple-400" />
+              <img src={gemIcon} alt="working" className="w-4 h-4 animate-spin" />
               <span className="text-purple-600 text-sm">Round {rounds.length + 1} in progress…</span>
             </div>
           )}
@@ -474,7 +552,7 @@ export function AssessmentModal({
               disabled={savingGem}
               className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full shadow-lg disabled:opacity-60 transition-all whitespace-nowrap"
             >
-              {savingGem ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <img src={gemIcon} alt="gem" className="w-4 h-4" />}
+              {savingGem ? <img src={gemIcon} alt="saving" className="w-3.5 h-3.5 animate-spin" /> : <img src={gemIcon} alt="gem" className="w-4 h-4" />}
               Save as Gem
               {floatingBtn.fileName && (
                 <span className="text-amber-200 text-xs">· {floatingBtn.fileName.length > 20 ? floatingBtn.fileName.substring(0, 20) + '…' : floatingBtn.fileName}</span>
@@ -486,8 +564,7 @@ export function AssessmentModal({
 
       {/* Footer */}
       {isComplete && (
-        <div className="bg-white border-t-2 border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
-          <p className="text-gray-500 text-sm">Highlight any text above to save it as a Gem 💎</p>
+        <div className="bg-white border-t-2 border-gray-200 px-6 py-4 flex items-center justify-end flex-shrink-0">
           <button onClick={onClose} className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
             Accept & Close
           </button>

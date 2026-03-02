@@ -649,11 +649,11 @@ export function CentralHexView({
 
                         {/* Level 2: Purchase Context - Show only for THIS Level 1 if checked */}
                         {selectedLevel1.includes(opt.id) && opt.subcategories && (
-                          <div className="ml-6 pl-4 border-l-2 border-blue-300 mt-0 space-y-0">
+                          <div className="ml-8 pl-6 border-l-2 border-blue-300 mt-1 mb-1 space-y-1">
                             {opt.subcategories.map((level2) => (
                               <div key={level2.id}>
                                 <label
-                                  className="flex items-start gap-2 p-0.5 cursor-pointer hover:bg-gray-50 rounded transition-colors"
+                                  className="flex items-start gap-2 p-1.5 cursor-pointer hover:bg-gray-50 rounded transition-colors"
                                 >
                                   <input
                                     type="checkbox"
@@ -705,12 +705,12 @@ export function CentralHexView({
 
                                 {/* Level 3: Buyer Profile - Show only for THIS Level 2 if checked */}
                                 {selectedLevel2.includes(level2.id) && level2.roles && (
-                                  <div className="ml-6 pl-4 border-l-2 border-green-300 mt-0">
-                                    <div className="space-y-0 max-h-64 overflow-y-auto">
+                                  <div className="ml-8 pl-6 border-l-2 border-green-300 mt-1">{/* Changed from ml-6 pl-4 to ml-8 pl-6 */}
+                                    <div className="space-y-0.5 max-h-64 overflow-y-auto">
                                       {level2.roles.map((level3) => (
                                         <label
                                           key={level3.id}
-                                          className="flex items-center gap-2 p-0.5 cursor-pointer hover:bg-gray-50 rounded transition-all"
+                                          className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded transition-all"
                                         >
                                           <input
                                             type="checkbox"

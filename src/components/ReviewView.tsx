@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Download, Trash2, ChevronDown, RefreshCw, Filter, X } from 'lucide-react';
 import { listKnowledgeBaseFiles, deleteKnowledgeBaseFile, downloadKnowledgeBaseFile, downloadFile, KnowledgeBaseFile } from '../utils/databricksAPI';
-import { getValidSession } from '../utils/databricksAuth';
+import { getValidSession, getCurrentUserEmail } from '../utils/databricksAuth';
 import { AlertCircle } from 'lucide-react';
 
 interface ReviewViewProps {
@@ -44,7 +44,7 @@ export function ReviewView({ projectFiles, onDeleteFiles }: ReviewViewProps) {
         const session = await getValidSession();
         if (session) {
           // Extract email from token or use workspace host as identifier
-          setCurrentUserEmail(session.workspaceHost);
+          setCurrentUserEmail(await getCurrentUserEmail());
           setIsAuthenticated(true);
         } else {
           setIsAuthenticated(false);
@@ -88,7 +88,9 @@ export function ReviewView({ projectFiles, onDeleteFiles }: ReviewViewProps) {
         params.sortOrder = 'ASC';
       }
       
+      console.log('[ReviewView] Fetching files with params:', params);
       const fetchedFiles = await listKnowledgeBaseFiles(params);
+      console.log('[ReviewView] Received files:', fetchedFiles.length);
       setFiles(fetchedFiles);
       
       // Extract unique values for filter dropdowns
@@ -103,8 +105,9 @@ export function ReviewView({ projectFiles, onDeleteFiles }: ReviewViewProps) {
       setAvailableUsers(users as string[]);
       
     } catch (error) {
-      console.error('Error fetching files:', error);
-      alert('Failed to load files from Databricks. Please try again.');
+      console.error('[ReviewView] Error fetching files:', error);
+      // Don't show alert - just log the error
+      // The empty state will show "No files found"
     } finally {
       setLoading(false);
     }
@@ -540,8 +543,20 @@ export function ReviewView({ projectFiles, onDeleteFiles }: ReviewViewProps) {
               Loading files...
             </div>
           ) : sortedFiles.length === 0 ? (
-            <div className="p-8 bg-gray-50 rounded-lg text-center text-gray-600">
-              No files found. {!showAllUsers && "Try enabling 'Show All Users' Files' or adjusting your filters."}
+            <div className="p-8 bg-gray-50 border-2 border-gray-300 rounded-lg text-center">
+              <p className="text-gray-900 mb-2">
+                {showAllUsers ? 'No files found in the Knowledge Base.' : 'You haven\'t uploaded any files yet.'}
+              </p>
+              <p className="text-gray-600 text-sm mb-3">
+                {showAllUsers 
+                  ? 'The Knowledge Base is empty. Upload files through the Wisdom hex or other workflow steps to get started.'
+                  : 'Files uploaded through workflow hexes (Wisdom, Luminaries, etc.) will appear here.'}
+              </p>
+              {!showAllUsers && (
+                <p className="text-gray-600 text-sm">
+                  💡 <span className="font-medium">Tip:</span> Check "Show All Users' Files" to see files uploaded by others in your organization.
+                </p>
+              )}
             </div>
           ) : (
             <div className="bg-white border-2 border-gray-300 rounded-lg overflow-hidden">
