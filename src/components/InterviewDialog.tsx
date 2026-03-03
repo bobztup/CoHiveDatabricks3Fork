@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, Loader2, Check, Mic, MicOff } from 'lucide-react';
+import { X, Send, Loader2, Check, Mic, MicOff, AlertCircle } from 'lucide-react';
 import { AIConversation } from '../utils/databricksAI';
 
 interface InterviewDialogProps {
@@ -13,6 +13,31 @@ interface InterviewDialogProps {
   userRole: string;
   onSaveTranscript: (transcript: string, fileName: string) => Promise<boolean>;
 }
+
+// Fallback questions if AI interview fails
+const FALLBACK_QUESTIONS = {
+  Brand: [
+    "What unique characteristics define this brand's identity?",
+    "What challenges or opportunities do you see for this brand?",
+    "How does this brand's audience perceive it compared to competitors?",
+    "What insights about this brand would be valuable for future projects?",
+    "What would you recommend for strengthening this brand's position?"
+  ],
+  Category: [
+    "What trends are shaping this category right now?",
+    "What unmet needs exist in this category?",
+    "How is consumer behavior evolving in this space?",
+    "What opportunities exist for innovation in this category?",
+    "What insights would help teams working in this category?"
+  ],
+  General: [
+    "What important insight or knowledge would you like to share?",
+    "What context or background is important to understand this insight?",
+    "How might others apply this insight in their work?",
+    "What examples or evidence support this insight?",
+    "What recommendations would you make based on this insight?"
+  ]
+};
 
 export function InterviewDialog({
   open,
@@ -34,6 +59,8 @@ export function InterviewDialog({
   const [isSaving, setIsSaving] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
+  const [useAI, setUseAI] = useState(true);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const recognitionRef = useRef<any>(null);
   const maxQuestions = 5;
   
@@ -45,7 +72,17 @@ export function InterviewDialog({
   );
 
   useEffect(() => {
-    if (open && !conversation) {
+    if (open && !conversation && useAI) {
+      // Try to initialize AI conversation
+      initializeAIInterview();
+    } else if (open && !useAI && messages.length === 0) {
+      // Start with fallback questions
+      startFallbackInterview();
+    }
+  }, [open, conversation, insightType, brand, projectType, userEmail, userRole, useAI]);
+
+  const initializeAIInterview = async () => {
+    try {
       // Initialize conversation with interview system prompt
       const systemPrompt = `You are an expert interviewer conducting a wisdom extraction session. 
 Your goal is to help the user articulate ${insightType.toLowerCase()} insights through thoughtful questions.
@@ -69,81 +106,116 @@ Start by introducing yourself briefly (1 sentence) and then immediately ask your
       setConversation(conv);
       
       // Get first question
-      startInterview(conv);
+      await startAIInterview(conv);
+    } catch (err) {
+      console.error('Failed to initialize AI interview:', err);
+      handleAIError(err);
     }
-  }, [open, conversation, insightType, brand, projectType, userEmail, userRole]);
+  };
 
-  const startInterview = async (conv: AIConversation) => {
+  const startAIInterview = async (conv: AIConversation) => {
     setIsLoading(true);
     setInitError(null);
     try {
-      console.log('Starting interview, asking first question...');
+      console.log('Starting AI interview, asking first question...');
       const response = await conv.ask('Please introduce yourself briefly and ask your first question.');
       console.log('Got first question:', response);
       setMessages([{ role: 'assistant', content: response }]);
       setQuestionCount(1);
     } catch (err) {
-      console.error('Failed to start interview:', err);
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      
-      // Provide more helpful error messages
-      let userFriendlyError = errorMessage;
-      
-      if (errorMessage.includes('Model invocation failed') || errorMessage.includes('serving-endpoints')) {
-        userFriendlyError = `Databricks AI Model Endpoint Error
-
-The AI interview feature requires a Databricks Model Serving endpoint to be configured.
-
-Error: ${errorMessage}
-
-To fix this:
-1. Ensure you have a model serving endpoint deployed in your Databricks workspace
-2. The default endpoint expected is: "databricks-meta-llama-3-1-70b-instruct"
-3. Or contact your Databricks admin to set up Foundation Model APIs
-4. Check that you have access permissions to the model endpoint
-
-For now, you can use other input methods like Text, Voice, or File upload.`;
-      } else if (errorMessage.includes('Authentication') || errorMessage.includes('auth')) {
-        userFriendlyError = `Authentication Error
-
-${errorMessage}
-
-Please try:
-1. Sign out and sign back in to Databricks
-2. Check that your session hasn't expired
-3. Verify your Databricks workspace is accessible`;
-      } else if (errorMessage.includes('Network') || errorMessage.includes('fetch')) {
-        userFriendlyError = `Network Connection Error
-
-${errorMessage}
-
-Please check:
-1. Your internet connection is stable
-2. Your Databricks workspace URL is correct
-3. There are no firewall or VPN issues blocking the connection`;
-      }
-      
-      // Set error state instead of closing
-      setInitError(userFriendlyError);
+      console.error('Failed to start AI interview:', err);
+      handleAIError(err);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRetry = () => {
-    if (!conversation) return;
+  const handleAIError = (err: any) => {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    
+    console.error('AI Interview Error:', errorMessage);
+    
+    // Provide more helpful error messages
+    let userFriendlyError = errorMessage;
+    
+    if (errorMessage.includes('Model invocation failed') || errorMessage.includes('serving-endpoints')) {
+      userFriendlyError = `AI Model Not Available\n\nThe AI interview feature requires a Databricks Model Serving endpoint.\n\nError: ${errorMessage}`;
+    } else if (errorMessage.includes('Not authenticated')) {
+      userFriendlyError = `Authentication Required\n\nPlease sign in to Databricks to use AI interviews.`;
+    } else if (errorMessage.includes('timeout')) {
+      userFriendlyError = `Request Timeout\n\nThe AI model took too long to respond. This might be a temporary issue.`;
+    }
+    
+    setInitError(userFriendlyError);
+    setIsLoading(false);
+  };
+
+  const startFallbackInterview = () => {
+    const questions = FALLBACK_QUESTIONS[insightType];
+    const firstQuestion = questions[0];
+    setMessages([{ 
+      role: 'assistant', 
+      content: `Hello! I'll guide you through ${maxQuestions} questions about your ${insightType.toLowerCase()} insights. Let's begin:\n\n${firstQuestion}` 
+    }]);
+    setCurrentQuestionIndex(0);
+    setQuestionCount(1);
+  };
+
+  const switchToFallback = () => {
+    setUseAI(false);
     setInitError(null);
     setMessages([]);
+    setConversation(null);
+    startFallbackInterview();
+  };
+
+  const retryAI = () => {
+    setInitError(null);
+    setMessages([]);
+    setConversation(null);
     setQuestionCount(0);
-    startInterview(conversation);
+    initializeAIInterview();
   };
 
   const handleSendMessage = async () => {
-    if (!userInput.trim() || !conversation || isLoading) return;
+    if (!userInput.trim() || isLoading) return;
 
     const userMessage = userInput.trim();
     setUserInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
+
+    // Fallback mode (no AI)
+    if (!useAI) {
+      const questions = FALLBACK_QUESTIONS[insightType];
+      const newIndex = currentQuestionIndex + 1;
+      
+      setQuestionCount(prev => prev + 1);
+      
+      if (newIndex < maxQuestions) {
+        // Ask next question
+        setTimeout(() => {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: questions[newIndex] 
+          }]);
+          setCurrentQuestionIndex(newIndex);
+        }, 500);
+      } else {
+        // Interview complete
+        setTimeout(() => {
+          setMessages(prev => [...prev, { 
+            role: 'assistant', 
+            content: `Thank you for sharing your insights! I've captured your responses to all ${maxQuestions} questions. Your knowledge will be valuable to the team.` 
+          }]);
+          setInterviewComplete(true);
+        }, 500);
+      }
+      return;
+    }
+
+    // AI mode
+    if (!conversation) return;
+    
     setIsLoading(true);
 
     try {
@@ -178,8 +250,7 @@ Please check:
   };
 
   const handleSaveToKnowledgeBase = async () => {
-    if (!conversation) return;
-
+    // Works for both AI and fallback modes
     setIsSaving(true);
     try {
       // Format conversation as text
@@ -327,7 +398,7 @@ Interviewee: ${userEmail}
                       Close
                     </button>
                     <button
-                      onClick={handleRetry}
+                      onClick={retryAI}
                       disabled={isLoading}
                       className="flex-1 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center gap-2"
                     >
@@ -339,6 +410,12 @@ Interviewee: ${userEmail}
                       ) : (
                         'Try Again'
                       )}
+                    </button>
+                    <button
+                      onClick={switchToFallback}
+                      className="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      Use Fallback Questions
                     </button>
                   </div>
                 </div>

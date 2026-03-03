@@ -1114,24 +1114,83 @@ export default function ProcessWireframe() {
     
     // For now, we'll suggest V1 as the version
     // In a real implementation, you could track versions in localStorage
-    const filename = `${baseFilename}_V1.json`;
+    const filename = `${baseFilename}_V1.md`;
     
-    const exportData = {
-      version: '1.0',
-      exportDate: new Date().toISOString(),
-      projectName: responses['Enter']?.[0] || 'CoHive Project',
-      responses,
-      researchFiles,
-      ideasFiles,
-      hexExecutions,
-      editSuggestions,
-      projectFiles,
-      currentTemplateId,
-      templates
-    };
+    // Build Markdown content
+    let markdown = `# CoHive Project Export\n\n`;
+    markdown += `**Brand:** ${brandName}\n`;
+    markdown += `**Project Type:** ${projectType}\n`;
+    markdown += `**Export Date:** ${new Date().toLocaleString()}\n`;
+    markdown += `**Template:** ${currentTemplate?.name || 'Default'}\n`;
+    markdown += `**User Role:** ${currentTemplate?.role || 'N/A'}\n\n`;
+    markdown += `---\n\n`;
+    
+    // Workflow Responses
+    markdown += `## Workflow Responses\n\n`;
+    const stepOrder = ['Enter', 'Research', 'Luminaries', 'Panelist', 'Consumers', 'Competitors', 'Colleagues', 'Cultural Voices', 'Social Voices', 'Wisdom', 'Grade', 'Action'];
+    
+    stepOrder.forEach(stepId => {
+      if (responses[stepId] && Object.keys(responses[stepId]).length > 0) {
+        markdown += `### ${stepId}\n\n`;
+        Object.entries(responses[stepId]).forEach(([questionIndex, answer]) => {
+          markdown += `**Q${parseInt(questionIndex) + 1}:** ${answer}\n\n`;
+        });
+      }
+    });
+    
+    // Research Files
+    if (researchFiles.length > 0) {
+      markdown += `---\n\n## Research Files\n\n`;
+      researchFiles.forEach(file => {
+        markdown += `- **${file.fileName}** (${file.brand} - ${file.projectType})${file.isApproved ? ' ✓' : ''}\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Ideas Files
+    if (ideasFiles.length > 0) {
+      markdown += `---\n\n## Ideas Files\n\n`;
+      ideasFiles.forEach(file => {
+        markdown += `- **${file.fileName}** (${file.brand} - ${file.projectType})\n`;
+      });
+      markdown += `\n`;
+    }
+    
+    // Hex Executions
+    if (hexExecutions.length > 0) {
+      markdown += `---\n\n## Execution History\n\n`;
+      hexExecutions.forEach((exec, index) => {
+        const execDate = new Date(exec.timestamp).toLocaleString();
+        markdown += `### Execution ${index + 1}: ${exec.hexId}\n`;
+        markdown += `- **Date:** ${execDate}\n`;
+        markdown += `- **Assessment Type:** ${exec.assessmentType || 'N/A'}\n`;
+        markdown += `- **Personas:** ${exec.selectedPersonas?.join(', ') || 'None'}\n`;
+        markdown += `- **Status:** ${exec.status}\n`;
+        if (exec.rounds && exec.rounds.length > 0) {
+          markdown += `\n#### Assessment Rounds\n\n`;
+          exec.rounds.forEach((round: any) => {
+            markdown += `**Round ${round.roundNumber}:**\n\n${round.content}\n\n`;
+          });
+        }
+        markdown += `\n`;
+      });
+    }
+    
+    // Edit Suggestions
+    if (editSuggestions.length > 0) {
+      markdown += `---\n\n## Edit Suggestions\n\n`;
+      editSuggestions.forEach((suggestion, index) => {
+        markdown += `### Suggestion ${index + 1}\n`;
+        markdown += `${suggestion.suggestion}\n\n`;
+      });
+    }
+    
+    // Metadata footer
+    markdown += `---\n\n`;
+    markdown += `*Export Version: 1.0*\n`;
+    markdown += `*Template ID: ${currentTemplateId || 'default'}*\n`;
 
-    const dataStr = JSON.stringify(exportData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const dataBlob = new Blob([markdown], { type: 'text/markdown' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
@@ -1143,68 +1202,11 @@ export default function ProcessWireframe() {
   };
 
   // Import project data
+  // Note: Import functionality disabled - exports are now Markdown (.md) format
+  // which is human-readable but not programmatically importable.
+  // Data persists in localStorage and Databricks.
   const handleImportData = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      try {
-        const importData = JSON.parse(e.target?.result as string);
-        
-        // Validate data structure
-        if (!importData.version || !importData.responses) {
-          alert('Invalid project file format');
-          return;
-        }
-
-        // Confirm before overwriting
-        if (Object.keys(responses).length > 0) {
-          const confirmed = confirm('This will replace your current project data. Continue?');
-          if (!confirmed) return;
-        }
-
-        // Import all data
-        setResponses(importData.responses || {});
-        setResearchFiles(importData.researchFiles || []);
-        setIdeasFiles(importData.ideasFiles || []);
-        setHexExecutions(importData.hexExecutions || {});
-        setEditSuggestions(importData.editSuggestions || []);
-        setProjectFiles(importData.projectFiles || []);
-        
-        if (importData.currentTemplateId) {
-          setCurrentTemplateId(importData.currentTemplateId);
-        }
-        
-        if (importData.templates) {
-          setTemplates(importData.templates);
-        }
-
-        // Save to localStorage
-        localStorage.setItem('cohive_responses', JSON.stringify(importData.responses || {}));
-        localStorage.setItem('cohive_research_files', JSON.stringify(importData.researchFiles || []));
-        localStorage.setItem('cohive_ideas_files', JSON.stringify(importData.ideasFiles || []));
-        localStorage.setItem('cohive_hex_executions', JSON.stringify(importData.hexExecutions || {}));
-        localStorage.setItem('cohive_edit_suggestions', JSON.stringify(importData.editSuggestions || []));
-        localStorage.setItem('cohive_projects', JSON.stringify(importData.projectFiles || []));
-        
-        if (importData.currentTemplateId) {
-          localStorage.setItem('cohive_current_template_id', importData.currentTemplateId);
-        }
-        
-        if (importData.templates) {
-          localStorage.setItem('cohive_templates', JSON.stringify(importData.templates));
-        }
-
-        alert(`Project "${importData.projectName}" imported successfully!`);
-      } catch (error) {
-        alert('Failed to import project file. Please check the file format.');
-        console.error('Import error:', error);
-      }
-    };
-    reader.readAsText(file);
-    
-    // Reset file input
+    alert('Import is not available. Project exports are now in Markdown format for documentation purposes. Your work is automatically saved to localStorage and Databricks.');
     event.target.value = '';
   };
 
@@ -1407,23 +1409,11 @@ export default function ProcessWireframe() {
             <button 
               className="px-4 py-2 border-2 border-blue-500 text-blue-700 rounded flex items-center gap-2 hover:bg-gray-50"
               onClick={handleExportData}
-              title="Export project data to JSON file"
+              title="Export project data to Markdown file"
             >
               <Download className="w-4 h-4" />
-              Export Project
+              Export Project (.md)
             </button>
-
-            {/* Import Project Button */}
-            <label className="px-4 py-2 border-2 border-green-500 text-green-700 rounded flex items-center gap-2 hover:bg-gray-50 cursor-pointer">
-              <Upload className="w-4 h-4" />
-              Import Project
-              <input
-                type="file"
-                accept=".json"
-                className="hidden"
-                onChange={handleImportData}
-              />
-            </label>
 
             {/* Restart Button */}
             <button 
@@ -3612,7 +3602,7 @@ export default function ProcessWireframe() {
         onComplete={() => {
           // Mark interview as completed in responses
           if (activeStepId === 'Wisdom') {
-            handleResponseChange(2, 'Interview completed and saved to Knowledge Base');
+            handleResponseChange(1, 'Interview completed and saved to Knowledge Base');
           }
         }}
         insightType={interviewContext.insightType}
