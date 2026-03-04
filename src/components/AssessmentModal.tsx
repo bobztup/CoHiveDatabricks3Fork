@@ -42,6 +42,9 @@ interface AssessmentModalProps {
   userSolution?: string;
   userEmail: string;
   ideasFile?: { fileName: string; content: string; fileType: string } | null;
+  // BJS: selected model ID — comes from CentralHexView per-assessment selector.
+  // Falls back to global default in assessment/run.js if not provided.
+  modelId?: string;
 }
 
 interface GemToast {
@@ -72,6 +75,7 @@ export function AssessmentModal({
   userSolution,
   userEmail,
   ideasFile,
+  modelId,  // BJS: per-assessment model override
 }: AssessmentModalProps) {
   const [rounds, setRounds] = useState<AssessmentRound[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -84,6 +88,12 @@ export function AssessmentModal({
   const [savingGem, setSavingGem] = useState(false);
   const [gemToasts, setGemToasts] = useState<GemToast[]>([]);
   const [savedGemCount, setSavedGemCount] = useState(0);
+  // BJS: Summary tab state — summary populated from assessment/run.js
+  // dedicated summarizer pass (Conversation.summarize_conversation() equivalent).
+  // activeTab switches automatically to 'summary' when assessment completes and
+  // a summary is available; user can switch back to 'rounds' at any time.
+  const [summary, setSummary] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'rounds' | 'summary'>('rounds');
 
   const contentRef = useRef<HTMLDivElement>(null);
   const hasStarted = useRef(false);
@@ -96,6 +106,8 @@ export function AssessmentModal({
     setCurrentRound(0);
     setIsComplete(false);
     setCitedFiles([]);
+    setSummary(null);
+    setActiveTab('rounds');
 
     try {
       const session = await getValidSession();
@@ -134,6 +146,7 @@ export function AssessmentModal({
           selectedPersonas,
           kbFiles,
           userEmail,
+          modelId,   // BJS: forward selected model to assessment/run.js
           accessToken: session.accessToken,
           workspaceHost: session.workspaceHost,
         }),
@@ -141,8 +154,6 @@ export function AssessmentModal({
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ message: response.statusText }));
-        console.error('[AssessmentModal] Assessment failed:', err);
-        console.error('[AssessmentModal] Response status:', response.status);
         throw new Error(err.message || 'Assessment failed');
       }
 
@@ -158,17 +169,20 @@ export function AssessmentModal({
       }
 
       setCitedFiles(result.citedFiles || []);
+      // BJS: Store summary from dedicated summarizer pass.
+      // Auto-switch to summary tab if one was returned.
+      if (result.summary) {
+        setSummary(result.summary);
+        setActiveTab('summary');
+      }
       setIsComplete(true);
     } catch (err) {
-      console.error('[AssessmentModal] Error caught:', err);
-      console.error('[AssessmentModal] Error message:', err instanceof Error ? err.message : 'Unknown error');
-      console.error('[AssessmentModal] Error stack:', err instanceof Error ? err.stack : 'No stack');
       setError(err instanceof Error ? err.message : 'Assessment failed');
     } finally {
       setIsRunning(false);
       setCurrentRound(0);
     }
-  }, [hexId, hexLabel, brand, projectType, assessmentType, userSolution, ideasFile, selectedPersonas, kbFileNames, researchFiles, userEmail]);
+  }, [hexId, hexLabel, brand, projectType, assessmentType, userSolution, ideasFile, selectedPersonas, kbFileNames, researchFiles, userEmail, modelId]);
 
   useEffect(() => {
     if (isOpen && !hasStarted.current) {
@@ -189,81 +203,6 @@ export function AssessmentModal({
       contentRef.current.scrollTop = contentRef.current.scrollHeight;
     }
   }, [rounds, currentRound]);
-
-  // Handle text selection changes (better for Mac trackpad)
-  useEffect(() => {
-    const handleSelectionChange = () => {
-      // Small delay to let the selection settle
-      setTimeout(() => {
-        const selection = window.getSelection();
-        if (!selection || selection.isCollapsed || !selection.toString().trim()) {
-          setFloatingBtn(null);
-          return;
-        }
-        const text = selection.toString().trim();
-        if (text.length < 10) {
-          setFloatingBtn(null);
-          return;
-        }
-
-        // Check if selection is inside the modal content
-        const range = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
-        if (!range || !contentRef.current?.contains(range.commonAncestorContainer)) {
-          setFloatingBtn(null);
-          return;
-        }
-
-        const allContent = rounds.map(r => r.content).join('\n');
-        const selectionContext = text.substring(0, 100);
-        const textIdx = allContent.indexOf(selectionContext);
-
-        let fileId: string | null = null;
-        let fileName: string | null = null;
-
-        if (textIdx >= 0) {
-          const citationRegex = /\[Source:\s*([^\]]+)\]/g;
-          let match: RegExpExecArray | null;
-          let lastCitationName: string | null = null;
-          while ((match = citationRegex.exec(allContent)) !== null) {
-            if (match.index < textIdx + selectionContext.length) {
-              lastCitationName = match[1].trim();
-            }
-          }
-          if (lastCitationName) {
-            const cited = citedFiles.find(f => f.fileName?.toLowerCase() === lastCitationName!.toLowerCase());
-            fileId = cited?.fileId || null;
-            fileName = lastCitationName;
-          }
-        }
-
-        const rect = range.getBoundingClientRect();
-        const modalRect = contentRef.current?.getBoundingClientRect();
-        if (modalRect) {
-          setFloatingBtn({ x: rect.left - modalRect.left + rect.width / 2, y: rect.top - modalRect.top - 52, text, fileId, fileName });
-        }
-      }, 50);
-    };
-
-    document.addEventListener('selectionchange', handleSelectionChange);
-    return () => document.removeEventListener('selectionchange', handleSelectionChange);
-  }, [rounds, citedFiles]);
-
-  // Handle keyboard shortcuts (Enter or Cmd+S to save gem)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (floatingBtn && (e.key === 'Enter' || (e.key === 's' && (e.metaKey || e.ctrlKey)))) {
-        e.preventDefault();
-        handleSaveGem();
-      }
-      if (e.key === 'Escape') {
-        setFloatingBtn(null);
-        window.getSelection()?.removeAllRanges();
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [floatingBtn]);
 
   const handleMouseUp = useCallback((_e: React.MouseEvent) => {
     const selection = window.getSelection();
@@ -307,10 +246,7 @@ export function AssessmentModal({
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    if (!target.closest('[data-gem-button]')) {
-      // Don't clear immediately - let selectionchange handle it
-      // This prevents the button from disappearing when clicking on selected text
-    }
+    if (!target.closest('[data-gem-button]')) setFloatingBtn(null);
   }, []);
 
   const handleSaveGem = async () => {
@@ -402,7 +338,7 @@ export function AssessmentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-8" style={{ backgroundColor: 'rgba(0, 0, 0, 0.2)' }}>
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-8">
       <div className="bg-white rounded-xl shadow-2xl flex flex-col" style={{ width: '75%', height: '75vh', maxWidth: '1200px' }}>
       {/* Header */}
       <div className="bg-white border-b-2 border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0 rounded-t-xl">
@@ -437,7 +373,7 @@ export function AssessmentModal({
       {/* Progress */}
       {isRunning && (
         <div className="bg-purple-50 border-b border-purple-200 px-6 py-3 flex items-center gap-3 flex-shrink-0">
-          <img src={gemIcon} alt="working" className="w-4 h-4 animate-spin" />
+          <Loader className="w-4 h-4 animate-spin text-purple-600" />
           <span className="text-purple-800 text-sm font-medium">
             {currentRound > 0 ? `Running Round ${currentRound}…` : 'Starting collaboration…'}
           </span>
@@ -457,6 +393,36 @@ export function AssessmentModal({
           <span className="text-amber-800 text-sm">
             <strong>Highlight any text</strong> to save it as a Gem — gems track which KB files inspired great ideas
           </span>
+        </div>
+      )}
+
+      {/* BJS: Tab bar — shown once assessment is complete.
+          Rounds tab: full per-persona round content with gem highlighting.
+          Summary tab: neutral summarizer output (5-section structured summary). */}
+      {isComplete && (
+        <div className="bg-white border-b-2 border-gray-200 px-6 flex gap-0 flex-shrink-0">
+          <button
+            onClick={() => setActiveTab('rounds')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-0.5 ${
+              activeTab === 'rounds'
+                ? 'border-purple-600 text-purple-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Rounds ({rounds.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('summary')}
+            className={`px-5 py-3 text-sm font-medium border-b-2 transition-colors -mb-0.5 flex items-center gap-1.5 ${
+              activeTab === 'summary'
+                ? 'border-purple-600 text-purple-700'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Summary
+            {summary && <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />}
+            {!summary && <span className="text-xs text-gray-400">(unavailable)</span>}
+          </button>
         </div>
       )}
 
@@ -488,6 +454,47 @@ export function AssessmentModal({
           </div>
         )}
 
+        {/* BJS: Summary tab panel — renders neutral summarizer output.
+            Formatted as plain text with light markdown rendering.
+            Gem highlighting is intentionally disabled on the summary tab
+            since it references rounds content rather than raw KB files. */}
+        {activeTab === 'summary' && isComplete && (
+          <div className="p-6 max-w-4xl mx-auto">
+            {summary ? (
+              <div className="bg-white border-2 border-purple-200 rounded-lg p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+                  <h3 className="text-gray-900 font-semibold text-base">Assessment Summary</h3>
+                  <span className="text-gray-400 text-xs ml-auto">{brand} · {assessmentType}</span>
+                </div>
+                <div className="space-y-1">
+                  {summary.split('\n').map((line, i) => {
+                    if (/^#{1,3}\s/.test(line)) {
+                      return <h4 key={i} className="text-gray-900 font-semibold text-sm mt-4 mb-1">{line.replace(/^#+\s/, '')}</h4>;
+                    }
+                    if (/^\d+\.\s/.test(line)) {
+                      return <p key={i} className="text-gray-700 text-sm leading-relaxed pl-4">{line}</p>;
+                    }
+                    if (/^[-•]\s/.test(line)) {
+                      return <p key={i} className="text-gray-700 text-sm leading-relaxed pl-4">• {line.replace(/^[-•]\s/, '')}</p>;
+                    }
+                    if (!line.trim()) return <div key={i} className="h-2" />;
+                    return <p key={i} className="text-gray-700 text-sm leading-relaxed">{line}</p>;
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-lg p-8 text-center">
+                <p className="text-gray-500 text-sm">No summary was generated for this assessment.</p>
+                <button onClick={() => setActiveTab('rounds')} className="mt-3 text-purple-600 text-sm hover:underline">
+                  View rounds instead
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'rounds' && (
         <div className="p-6 space-y-4 max-w-4xl mx-auto">
           {rounds.map((round, idx) => {
             const isCollapsed = collapsedRounds.has(round.roundNumber);
@@ -502,7 +509,7 @@ export function AssessmentModal({
                     <span className={`font-medium text-sm ${isLast ? 'text-purple-900' : 'text-gray-700'}`}>
                       Round {round.roundNumber}{isLast && isComplete ? ' — Final' : ''}
                     </span>
-                    {isLast && isRunning && <img src={gemIcon} alt="working" className="w-3.5 h-3.5 animate-spin" />}
+                    {isLast && isRunning && <Loader className="w-3.5 h-3.5 animate-spin text-purple-500" />}
                   </div>
                   {isCollapsed ? <ChevronDown className="w-4 h-4 text-gray-400" /> : <ChevronUp className="w-4 h-4 text-gray-400" />}
                 </button>
@@ -517,7 +524,7 @@ export function AssessmentModal({
 
           {isRunning && rounds.length > 0 && (
             <div className="bg-white border-2 border-dashed border-purple-200 rounded-lg px-4 py-3 flex items-center gap-3">
-              <img src={gemIcon} alt="working" className="w-4 h-4 animate-spin" />
+              <Loader className="w-4 h-4 animate-spin text-purple-400" />
               <span className="text-purple-600 text-sm">Round {rounds.length + 1} in progress…</span>
             </div>
           )}
@@ -545,6 +552,7 @@ export function AssessmentModal({
             </div>
           )}
         </div>
+        )}
 
         {/* Floating gem button */}
         {floatingBtn && (
@@ -557,7 +565,7 @@ export function AssessmentModal({
               disabled={savingGem}
               className="flex items-center gap-1.5 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-full shadow-lg disabled:opacity-60 transition-all whitespace-nowrap"
             >
-              {savingGem ? <img src={gemIcon} alt="saving" className="w-3.5 h-3.5 animate-spin" /> : <img src={gemIcon} alt="gem" className="w-4 h-4" />}
+              {savingGem ? <Loader className="w-3.5 h-3.5 animate-spin" /> : <img src={gemIcon} alt="gem" className="w-4 h-4" />}
               Save as Gem
               {floatingBtn.fileName && (
                 <span className="text-amber-200 text-xs">· {floatingBtn.fileName.length > 20 ? floatingBtn.fileName.substring(0, 20) + '…' : floatingBtn.fileName}</span>
@@ -569,7 +577,8 @@ export function AssessmentModal({
 
       {/* Footer */}
       {isComplete && (
-        <div className="bg-white border-t-2 border-gray-200 px-6 py-4 flex items-center justify-end flex-shrink-0">
+        <div className="bg-white border-t-2 border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
+          <p className="text-gray-500 text-sm">Highlight any text above to save it as a Gem 💎</p>
           <button onClick={onClose} className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900 transition-colors">
             Accept & Close
           </button>

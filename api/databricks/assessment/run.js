@@ -6,8 +6,48 @@
  * - System prompt and KB content stay server-side, never sent to client
  * - Returns only the AI-generated round outputs to the frontend
  *
+ * BJS additions:
+ * - Random persona shuffle before each assessment (mirrors random.shuffle in
+ *   Python's Conversation.full_conversation()) to avoid anchoring bias
+ * - Dedicated neutral summarizer pass at the end (mirrors
+ *   Conversation.summarize_conversation() calling the summarizer Persona)
+ *
  * Location: api/databricks/assessment/run.js
  */
+
+// BJS: Neutral summarizer system prompt — maps directly to
+// conversation_facilitators["summarizer_system_prompt"] in cohive.py.
+// Called as a separate API pass after all rounds complete, equivalent to
+// Conversation.summarize_conversation() → self.summarizer.respond().
+const SUMMARIZER_SYSTEM_PROMPT = `You are a neutral summarization agent. Your task is to summarize the provided assessment conversation accurately, concisely, and without interpretation, judgment, or emotional coloring.
+
+Guidelines:
+- Preserve factual content, decisions, recommendations, and outcomes exactly as presented.
+- Do not infer intent, motivations, or implications beyond what is explicitly stated.
+- Do not take sides, assign blame, praise, or critique any participant.
+- Do not add new information or omit material facts that affect understanding.
+- Use clear, plain language suitable for an executive or archival record.
+- Organize the summary into clearly labeled sections:
+  1. Key Recommendations (bullet points)
+  2. Areas of Agreement Across Personas
+  3. Tensions or Differing Views (if any)
+  4. Cited Sources Used
+  5. Suggested Next Steps
+- Tone must remain strictly neutral and objective.
+- Do not include meta-commentary about the summarization process.`;
+
+// BJS: Shuffles an array in place using Fisher-Yates algorithm.
+// Equivalent to random.shuffle(self.roundtable.names) in Python's
+// Conversation.full_conversation(). Prevents the first persona from always
+// anchoring the conversation and biasing subsequent contributions.
+function shuffleArray(arr) {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -26,6 +66,7 @@ export default async function handler(req, res) {
       selectedPersonas,
       kbFiles,
       userEmail,
+      modelId,      // BJS: selected model ID from frontend (global default or per-assessment override)
       accessToken,
       workspaceHost,
     } = req.body;
@@ -40,11 +81,47 @@ export default async function handler(req, res) {
 
     console.log(`[Assessment] Starting — hex: ${hexId}, brand: ${brand}`);
     console.log(`[Assessment] Types: ${assessmentTypes?.join(', ')}`);
-    console.log(`[Assessment] Personas: ${selectedPersonas?.join(', ')}`);
+    console.log(`[Assessment] Personas (pre-shuffle): ${selectedPersonas?.join(', ')}`);
     console.log(`[Assessment] KB files: ${kbFiles?.map(f => f.fileName).join(', ')}`);
+    console.log(`[Assessment] Model: ${modelId || 'default'}`);
 
     const warehouseId = '52742af9db71826d';
-    const modelEndpoint = 'databricks-claude-sonnet-4-6';
+
+    // BJS: Model is now swappable. modelId comes from the request body —
+    // either the global default (read from localStorage by the frontend and
+    // forwarded here) or a per-assessment override selected in CentralHexView.
+    // Falls back to the existing Databricks Claude endpoint if not provided.
+    // Routes through /api/models/invoke which handles all four providers.
+    const resolvedModelId = modelId || 'databricks-claude-sonnet-4-6';
+
+    // BJS: Helper to call the unified invoke endpoint for this assessment.
+    // Replaces the direct fetch to /serving-endpoints/ so all provider
+    // routing lives in one place (api/models/invoke.js).
+    const invokeModel = async (messages, systemPrompt, opts = {}) => {
+      const invokeResp = await fetch('/api/models/invoke', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          modelId: resolvedModelId,
+          messages,
+          systemPrompt,
+          maxTokens: opts.maxTokens || 3000,
+          temperature: opts.temperature ?? 0.8,
+          // Pass Databricks credentials — invoke.js only uses them for the databricks provider
+          accessToken,
+          workspaceHost,
+          ...(opts.ollamaModelName && { ollamaModelName: opts.ollamaModelName }),
+        }),
+      });
+
+      if (!invokeResp.ok) {
+        const err = await invokeResp.json().catch(() => ({}));
+        throw new Error(err.message || `Model invocation failed: ${invokeResp.statusText}`);
+      }
+
+      const invokeResult = await invokeResp.json();
+      return invokeResult.content || '';
+    };
 
     // ── Step 1: Fetch actual file content from Databricks ─────────────────
     const kbFilesWithContent = await Promise.all(
@@ -157,7 +234,6 @@ export default async function handler(req, res) {
           console.error(`[Assessment] Error loading ${kbFile.fileName}:`, err.message);
           console.error(`[Assessment] Full error:`, err);
           console.error(`[Assessment] Stack trace:`, err.stack);
-          // Re-throw so the whole assessment fails rather than running with incomplete data
           throw err;
         }
       })
@@ -201,9 +277,16 @@ export default async function handler(req, res) {
       }
     }
 
-    const personaList = selectedPersonas?.length > 0
-      ? selectedPersonas.join(', ') + ', Fact-Checker'
-      : 'General Expert, Fact-Checker';
+    // BJS: Shuffle persona order before building the prompt.
+    // Equivalent to random.shuffle(self.roundtable.names) in Python's
+    // Conversation.full_conversation(). Ensures no persona consistently anchors
+    // the conversation by always going first. Fact-Checker is always appended
+    // after the shuffle since it responds to others rather than leading.
+    const basePersonas = selectedPersonas?.length > 0 ? [...selectedPersonas] : ['General Expert'];
+    const shuffledPersonas = shuffleArray(basePersonas);
+    const personaList = [...shuffledPersonas, 'Fact-Checker'].join(', ');
+
+    console.log(`[Assessment] Personas (post-shuffle): ${personaList}`);
 
     const kbContext = kbFilesWithContent
       .map(f => `--- BEGIN FILE: ${f.fileName} ---\n${f.content}\n--- END FILE: ${f.fileName} ---`)
@@ -242,7 +325,7 @@ Run minimum 2 rounds. When output is complete and high-quality, end with [COLLAB
 Always include a "Fact-Checker" whose only job is verifying every citation exists in the KB and accurately reflects the source.
 
 Task: ${taskDescription}
-Personas: ${personaList}
+Personas (in this order): ${personaList}
 
 Begin Round 1 now.`;
 
@@ -256,34 +339,11 @@ Begin Round 1 now.`;
     while (!isComplete && roundNumber <= maxRounds) {
       console.log(`[Assessment] Claude round ${roundNumber}...`);
 
-      const aiResp = await fetch(
-        `https://${workspaceHost}/serving-endpoints/${modelEndpoint}/invocations`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messages: [
-              { role: 'system', content: systemPrompt },
-              ...conversationHistory,
-            ],
-            max_tokens: 3000,
-            temperature: 0.8,
-          }),
-        }
-      );
+      const roundContent = await invokeModel(conversationHistory, systemPrompt, {
+        maxTokens: 3000,
+        temperature: 0.8,
+      });
 
-      if (!aiResp.ok) {
-        const errData = await aiResp.json().catch(() => ({}));
-        throw new Error(`AI call failed (round ${roundNumber}): ${errData.message || aiResp.statusText}`);
-      }
-
-      const aiResult = await aiResp.json();
-      const roundContent = aiResult.choices?.[0]?.message?.content || '';
-
-      // Only store the AI output — prompts and KB content are never included
       rounds.push({
         roundNumber,
         content: roundContent,
@@ -308,7 +368,28 @@ Begin Round 1 now.`;
       roundNumber++;
     }
 
-    // ── Step 4: Extract cited files ────────────────────────────────────────
+    // ── Step 4: Dedicated summarizer pass ─────────────────────────────────
+    // BJS: Equivalent to Conversation.summarize_conversation() in cohive.py,
+    // which calls self.summarizer.respond(" ", self.conversation).
+    // This is a separate stateless API call using the neutral SUMMARIZER_SYSTEM_PROMPT.
+    // It receives only the round outputs — not KB content or system prompts —
+    // so it cannot be biased by the tone or framing of any individual persona.
+    // Failure is non-fatal: rounds are still returned if the summarizer errors.
+    let summary = null;
+    try {      console.log('[Assessment] Running summarizer pass...');
+      const allRoundContent = rounds
+        .map(r => `## Round ${r.roundNumber}\n\n${r.content}`)
+        .join('\n\n---\n\n');
+
+      const summary = await invokeModel(
+        [{ role: 'user', content: `Summarize the following multi-persona assessment for ${brand} (${assessmentTypeLabel}):\n\n${allRoundContent}` }],
+        SUMMARIZER_SYSTEM_PROMPT,
+        { maxTokens: 1500, temperature: 0.3 }
+      );
+      console.log(`[Assessment] Summary generated (${summary?.length} chars)`);
+    } catch (summaryErr) {
+      console.warn('[Assessment] Summarizer error (non-fatal):', summaryErr.message);
+    }    // ── Step 5: Extract cited files ────────────────────────────────────────
     const allContent = rounds.map(r => r.content).join('\n');
     const citationMatches = [...allContent.matchAll(/\[Source:\s*([^\]]+)\]/g)];
     const citedFileNames = [...new Set(citationMatches.map(m => m[1].trim()))];
@@ -322,8 +403,6 @@ Begin Round 1 now.`;
 
     console.log(`[Assessment] Complete — ${rounds.length} rounds, ${citedFiles.length} citations`);
 
-    // Return ONLY AI outputs. System prompt, KB content, and conversation
-    // scaffolding are never included in the response to the browser.
     return res.status(200).json({
       success: true,
       hexId,
@@ -333,6 +412,9 @@ Begin Round 1 now.`;
       rounds,
       totalRounds: rounds.length,
       citedFiles,
+      summary,
+      personaOrder: personaList,
+      modelId: resolvedModelId,   // BJS: which model ran this assessment
       completedAt: new Date().toISOString(),
     });
 

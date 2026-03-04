@@ -8,6 +8,9 @@ import {
 import gemIcon from "figma:asset/53dc6cf554f69e479cfbd60a46741f158d11dd21.png";
 import { getPersonasForHex, type PersonaLevel1, type PersonaLevel2, type PersonaLevel3 } from "../data/personas";
 import { isBrandInCategory } from "../data/brandCategoryMapping";
+// BJS: ModelSelector for per-assessment model override
+import { ModelSelector } from "./ModelSelector";
+import { getActiveModel } from "../utils/modelConfig";
 
 interface ResearchFile {
   id: string;
@@ -34,14 +37,17 @@ interface CentralHexViewProps {
   researchFiles: ResearchFile[];
   onExecute: (
     selectedFiles: string[],
-    assessmentType: string[], // Changed to array
+    assessmentType: string[],
     assessment: string,
+    modelId: string,   // BJS: selected model for this assessment run
   ) => void;
   databricksInstructions?: string;
   previousExecutions: HexExecution[];
   onSaveRecommendation?: (recommendation: string, hexId: string) => void;
   projectType?: string;
-  userBrand?: string; // Add user's brand
+  userBrand?: string;
+  userRole?: string;   // BJS: for ModelSelector role gate
+  userEmail?: string;  // BJS: for ModelSelector persistence
 }
 
 export function CentralHexView({
@@ -54,9 +60,11 @@ export function CentralHexView({
   onSaveRecommendation,
   projectType,
   userBrand,
+  userRole = 'research-analyst',  // BJS: default to least-privileged role
+  userEmail = '',                  // BJS: for model config persistence
 }: CentralHexViewProps) {
-  // Set initial step based on hexId
-  const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+  // Set initial step based on hexId - Competitors starts at step 3
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(hexId === 'competitors' ? 3 : 1);
   const [selectedFiles, setSelectedFiles] = useState<string[]>(
     [],
   );
@@ -74,6 +82,13 @@ export function CentralHexView({
   // Competitors-specific state
   const [selectedCompetitor, setSelectedCompetitor] = useState<string>("");
   const [competitorAnalysisType, setCompetitorAnalysisType] = useState<string>("");
+
+  // BJS: Per-assessment model override.
+  // Initialises from the global default (localStorage) so it always reflects
+  // whatever the admin/data-scientist set globally, but can be changed per run.
+  const [selectedModelId, setSelectedModelId] = useState<string>(
+    () => getActiveModel().id
+  );
 
   // Persona selection state for Consumers hex
   const [selectedPersonas, setSelectedPersonas] = useState<string[]>([]);
@@ -288,36 +303,47 @@ export function CentralHexView({
         }
       }
     } else {
-      // Only files required — assessment text field no longer exists
-      if (selectedFiles.length === 0) {
-        alert("Please select at least one knowledge base file.");
+      // For other hexes, validate files and assessment
+      if (selectedFiles.length === 0 || !assessment.trim()) {
+        alert(
+          "Please select at least one file and provide an assessment",
+        );
         return;
       }
     }
 
-    onExecute(selectedFiles, assessmentType, assessment);
+    onExecute(selectedFiles, assessmentType, assessment, selectedModelId);
 
-    // Reset form so hex is ready for next execution
-    setCurrentStep(1);
+    // Reset for next execution
+    setCurrentStep(hexId === 'competitors' ? 3 : 1);
     setSelectedFiles([]);
     setAssessmentType(["unified"]);
     setAssessment("");
-
+    // BJS: Reset model to current global default after each run
+    setSelectedModelId(getActiveModel().id);
+    
     // Reset competitors-specific fields
     if (hexId === 'competitors') {
       setSelectedCompetitor("");
       setCompetitorAnalysisType("");
     }
-    // Note: no alert here — the AssessmentModal handles the response display
+
+    alert(
+      "Process executed successfully! Data has been sent to Databricks.",
+    );
   };
 
   const canProceedToStep2 = selectedFiles.length > 0;
-  const canExecute =
-    hexId === 'competitors'
-      ? (projectType === 'War Games'
-          ? selectedCompetitor.length > 0
-          : selectedCompetitor.length > 0 && competitorAnalysisType.length > 0)
+  const canProceedToStep3 =
+    hexId === "Grade"
+      ? canProceedToStep2 && testingScale
       : canProceedToStep2 && assessmentType.length > 0;
+  const canExecute =
+    hexId === 'competitors' 
+      ? (projectType === 'War Games' 
+          ? selectedCompetitor.length > 0 
+          : selectedCompetitor.length > 0 && competitorAnalysisType.length > 0)
+      : canProceedToStep3 && assessment.trim().length > 0;
 
   return (
     <div className="space-y-2">
@@ -325,7 +351,7 @@ export function CentralHexView({
       {hexId !== 'competitors' && !(hexId === 'Consumers' || hexId === 'Luminaries' || hexId === 'Colleagues' || hexId === 'cultural' || hexId === 'Grade') && (
         <div className="flex items-center justify-between pb-1 border-b-2 border-gray-300">
           <div className="flex items-center gap-4">
-            {[1, 2].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center gap-2">
                 <button
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -337,9 +363,15 @@ export function CentralHexView({
                   }`}
                   onClick={() => {
                     if (step === 1) setCurrentStep(1);
-                    if (step === 2 && canProceedToStep2) setCurrentStep(2);
+                    if (step === 2 && canProceedToStep2)
+                      setCurrentStep(2);
+                    if (step === 3 && canProceedToStep3)
+                      setCurrentStep(3);
                   }}
-                  disabled={step === 2 && !canProceedToStep2}
+                  disabled={
+                    (step === 2 && !canProceedToStep2) ||
+                    (step === 3 && !canProceedToStep3)
+                  }
                 >
                   {currentStep > step ? (
                     <CheckCircle className="w-5 h-5" />
@@ -347,7 +379,7 @@ export function CentralHexView({
                     step
                   )}
                 </button>
-                {step < 2 && (
+                {step < 3 && (
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 )}
               </div>
@@ -355,7 +387,7 @@ export function CentralHexView({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">
-              Step {currentStep} of 2
+              Step {currentStep} of 3
             </span>
             {previousExecutions.length > 0 && (
               <button
@@ -374,7 +406,7 @@ export function CentralHexView({
       {(hexId === 'Consumers' || hexId === 'Luminaries' || hexId === 'Colleagues' || hexId === 'cultural' || hexId === 'Grade') && (
         <div className="flex items-center justify-between pb-1 border-b-2 border-gray-300">
           <div className="flex items-center gap-4">
-            {[1, 2].map((step) => (
+            {[1, 2, 3].map((step) => (
               <div key={step} className="flex items-center gap-2">
                 <button
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all ${
@@ -386,9 +418,15 @@ export function CentralHexView({
                   }`}
                   onClick={() => {
                     if (step === 1) setCurrentStep(1);
-                    if (step === 2 && canProceedToStep2) setCurrentStep(2);
+                    if (step === 2 && canProceedToStep2)
+                      setCurrentStep(2);
+                    if (step === 3 && canProceedToStep3)
+                      setCurrentStep(3);
                   }}
-                  disabled={step === 2 && !canProceedToStep2}
+                  disabled={
+                    (step === 2 && !canProceedToStep2) ||
+                    (step === 3 && !canProceedToStep3)
+                  }
                 >
                   {currentStep > step ? (
                     <CheckCircle className="w-5 h-5" />
@@ -396,7 +434,7 @@ export function CentralHexView({
                     step
                   )}
                 </button>
-                {step < 2 && (
+                {step < 3 && (
                   <ChevronRight className="w-5 h-5 text-gray-400" />
                 )}
               </div>
@@ -404,7 +442,7 @@ export function CentralHexView({
           </div>
           <div className="flex items-center gap-3">
             <span className="text-sm text-gray-600">
-              Step {currentStep} of 2
+              Step {currentStep} of 3
             </span>
           </div>
         </div>
@@ -649,11 +687,11 @@ export function CentralHexView({
 
                         {/* Level 2: Purchase Context - Show only for THIS Level 1 if checked */}
                         {selectedLevel1.includes(opt.id) && opt.subcategories && (
-                          <div className="ml-8 pl-6 border-l-2 border-blue-300 mt-1 mb-1 space-y-1">
+                          <div className="ml-6 pl-4 border-l-2 border-blue-300 mt-0 space-y-0">
                             {opt.subcategories.map((level2) => (
                               <div key={level2.id}>
                                 <label
-                                  className="flex items-start gap-2 p-1.5 cursor-pointer hover:bg-gray-50 rounded transition-colors"
+                                  className="flex items-start gap-2 p-0.5 cursor-pointer hover:bg-gray-50 rounded transition-colors"
                                 >
                                   <input
                                     type="checkbox"
@@ -705,12 +743,12 @@ export function CentralHexView({
 
                                 {/* Level 3: Buyer Profile - Show only for THIS Level 2 if checked */}
                                 {selectedLevel2.includes(level2.id) && level2.roles && (
-                                  <div className="ml-8 pl-6 border-l-2 border-green-300 mt-1">{/* Changed from ml-6 pl-4 to ml-8 pl-6 */}
-                                    <div className="space-y-0.5 max-h-64 overflow-y-auto">
+                                  <div className="ml-6 pl-4 border-l-2 border-green-300 mt-0">
+                                    <div className="space-y-0 max-h-64 overflow-y-auto">
                                       {level2.roles.map((level3) => (
                                         <label
                                           key={level3.id}
-                                          className="flex items-center gap-2 p-1 cursor-pointer hover:bg-gray-50 rounded transition-all"
+                                          className="flex items-center gap-2 p-0.5 cursor-pointer hover:bg-gray-50 rounded transition-all"
                                         >
                                           <input
                                             type="checkbox"
@@ -1025,13 +1063,100 @@ export function CentralHexView({
               ← Back
             </button>
             <button
-              className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              onClick={handleExecute}
-              disabled={!canExecute}
+              className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              onClick={() => setCurrentStep(3)}
             >
-              <PlayCircle className="w-5 h-5" />
-              Execute Process
+              Next: Provide Assessment →
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Assessment Input */}
+      {currentStep === 3 && hexId !== 'competitors' && (
+        <div className="p-3">
+          <h3 className="text-gray-900 leading-tight">
+            Step 3: Provide Your Assessment
+          </h3>
+          <p className="text-gray-600 mb-2">
+            Enter your assessment or instructions for how to
+            process these files.
+          </p>
+
+          <div className="mb-2">
+            <label className="block text-gray-900 mb-1">
+              Assessment / Instructions
+            </label>
+            <textarea
+              className="w-full h-40 border-2 border-gray-300 bg-white rounded p-3 text-gray-700 resize-none focus:outline-none focus:border-blue-500"
+              placeholder={`Enter your ${assessmentType.includes("assess") ? "assessment criteria" : assessmentType.includes("recommend") ? "recommendation requirements" : "assessment and recommendation instructions"}...`}
+              value={assessment}
+              onChange={(e) => setAssessment(e.target.value)}
+            />
+            <div className="text-sm text-gray-500 mt-1">
+              {assessment.length} characters
+            </div>
+          </div>
+
+          {/* Summary - Hidden for Competitors */}
+          {hexId !== 'competitors' && (
+            <div className="p-2 mb-2 border-2 border-blue-500">
+              <h4 className="text-gray-900 font-semibold mb-2">
+                Execution Summary
+              </h4>
+              <div className="text-sm text-gray-700 space-y-1">
+                <div>
+                  <strong>Files:</strong> {selectedFiles.length}{" "}
+                  selected
+                </div>
+                <div>
+                  <strong>Type:</strong>{" "}
+                  {assessmentType.map(type => 
+                    type === 'assess' ? 'Assess' : 
+                    type === 'recommend' ? 'Recommend' : 
+                    'Unified'
+                  ).join(', ')}
+                </div>
+                {databricksInstructions && (
+                  <div className="mt-2 pt-2 border-t border-blue-400">
+                    <strong>Databricks Instructions:</strong>
+                    <div className="mt-1 text-xs italic">
+                      {databricksInstructions}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-between mt-3">
+            {hexId !== 'competitors' && (
+              <button
+                className="px-6 py-2 border-2 border-gray-400 text-gray-700 rounded hover:bg-gray-50"
+                onClick={() => setCurrentStep(2)}
+              >
+                ← Back
+              </button>
+            )}
+            {/* BJS: Per-assessment model selector — compact, inline with Execute.
+                Admins and Data Scientists can change; others see read-only badge. */}
+            <div className={`flex items-center gap-3 ${hexId === 'competitors' ? 'w-full justify-between' : ''}`}>
+              <ModelSelector
+                userRole={userRole}
+                userEmail={userEmail}
+                selectedModelId={selectedModelId}
+                onModelChange={setSelectedModelId}
+                variant="compact"
+              />
+              <button
+                className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                onClick={handleExecute}
+                disabled={!canExecute}
+              >
+                <PlayCircle className="w-5 h-5" />
+                Execute Process
+              </button>
+            </div>
           </div>
         </div>
       )}
