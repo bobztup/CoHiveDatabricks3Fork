@@ -1032,6 +1032,9 @@ export function CentralHexView({
                           <div>
                             <span className="text-gray-900 font-medium text-sm">{p.name}</span>
                             <span className="ml-1.5 px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">Custom</span>
+                            {(p.contentJson as any).category && (
+                              <span className="ml-1 px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded text-xs">{(p.contentJson as any).subRole || (p.contentJson as any).category}</span>
+                            )}
                             {(p.contentJson as any).context && (
                               <p className="text-gray-500 text-xs mt-0.5 line-clamp-1">{(p.contentJson as any).context}</p>
                             )}

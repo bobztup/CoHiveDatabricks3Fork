@@ -346,10 +346,10 @@ ${summarySection}
               <Mic className="w-6 h-6 text-purple-600" />
               Wisdom Interview
             </h2>
-            {interviewTopic && (
-              <p className="text-sm text-gray-600 mt-1">
-                Topic: {interviewTopic}
-              </p>
+            {interviewTopic ? (
+              <p className="text-sm text-gray-600 mt-1">Topic: {interviewTopic}</p>
+            ) : (
+              <p className="text-xs text-purple-600 mt-0.5">You will be able to edit the results before they are saved.</p>
             )}
           </div>
           <button

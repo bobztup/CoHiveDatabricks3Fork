@@ -14,6 +14,7 @@ import { ReviewView } from './ReviewView';
 import { DatabricksOAuthLogin } from './DatabricksOAuthLogin';
 import { DatabricksFileSaver } from './DatabricksFileSaver';
 import { InterviewDialog } from './InterviewDialog';
+import { PersonaInterviewDialog } from './PersonaInterviewDialog';
 import { useMicDevices } from '../hooks/useMicDevices';
 import { AssessmentModal, type IdeaElement, type IterationGem, type KbMode, type RequestMode, type Scope } from './AssessmentModal';
 import { StoriesView } from './StoriesView';
@@ -180,6 +181,7 @@ export default function ProcessWireframe() {
   const [currentTemplateId, setCurrentTemplateId] = useState<string>('');
   const [showDiagnosticPanel, setShowDiagnosticPanel] = useState(false);
   const [showLogViewer, setShowLogViewer] = useState(false);
+  const [showPersonaInterviewDialog, setShowPersonaInterviewDialog] = useState(false);
   const [projectFiles, setProjectFiles] = useState<ProjectFile[]>([]);
   const [ideasFiles, setIdeasFiles] = useState<IdeasFile[]>([]);
   const [researchFiles, setResearchFiles] = useState<ResearchFile[]>([]);
@@ -1539,8 +1541,8 @@ export default function ProcessWireframe() {
                   Unit Testing
                 </button>
               )}
-              {/* Activity Log Viewer - Administrators and Research Leaders only */}
-              {(userRole === 'administrator' || userRole === 'research-leader') && (
+              {/* Activity Log Viewer - CoHive administrators only */}
+              {userRole === 'administrator' && userEmail.toLowerCase().endsWith('@cohivesolutions.com') && (
                 <button
                   className="w-full px-4 py-2 border-2 border-indigo-400 text-indigo-600 rounded flex items-center gap-2 hover:bg-indigo-50"
                   onClick={() => setShowLogViewer(true)}
@@ -1896,13 +1898,19 @@ export default function ProcessWireframe() {
                                 {hasResponse && <CircleCheck className="w-5 h-5 text-green-600 flex-shrink-0" />}
                               </label>
                               <div className="space-y-1">
-                                {['Text', 'Voice', 'Photo', 'File', 'Interview'].map(method => (
-                                  <label key={method} className="flex items-center gap-2 cursor-pointer">
-                                    <input type="radio" name="inputMethod" value={method} checked={responses[activeStepId]?.[idx] === method} onChange={(e) => handleResponseChange(idx, e.target.value)} className="w-4 h-4" />
+                                {['Text', 'Voice', 'Photo', 'File', 'Interview', 'Persona Interview'].map(method => (
+                                  <label key={method} className="flex items-start gap-2 cursor-pointer">
+                                    <input type="radio" name="inputMethod" value={method} checked={responses[activeStepId]?.[idx] === method} onChange={(e) => handleResponseChange(idx, e.target.value)} className="w-4 h-4 mt-0.5" />
                                     <span className="text-gray-700">
                                       {method === 'Text' ? 'Text / dictation, unlimited time'
                                         : method === 'Voice' ? 'Voice / audio - 90 seconds'
                                         : method === 'Interview' ? 'Be Interviewed'
+                                        : method === 'Persona Interview' ? (
+                                          <span>
+                                            Interview to Become a Persona
+                                            <span className="block text-xs text-indigo-600 mt-0.5">Your AI Persona can attempt to ask and answer questions about a strategy as well as make recommendations and assessments.</span>
+                                          </span>
+                                        )
                                         : method}
                                     </span>
                                   </label>
@@ -1920,7 +1928,7 @@ export default function ProcessWireframe() {
                           const inputMethod = responses[activeStepId]?.[0];
                           if (!inputMethod) return null;
 
-                          const usesMic = ['Text', 'Voice', 'Interview'].includes(inputMethod);
+                          const usesMic = ['Text', 'Voice', 'Interview', 'Persona Interview'].includes(inputMethod);
                           const MicDevicePicker = usesMic && micDevices.length > 1 ? (
                             <div className="flex items-center gap-2 mb-3">
                               <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
@@ -2222,6 +2230,27 @@ export default function ProcessWireframe() {
                                 >
                                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg>
                                   Start Interview
+                                </button>
+                                {responses[activeStepId]?.[idx] && <div className="bg-green-50 border border-green-200 rounded p-2 mt-2"><p className="text-sm text-green-700">✓ {responses[activeStepId][idx]}</p></div>}
+                              </div>
+                            );
+                          }
+
+                          // PERSONA INTERVIEW
+                          if (inputMethod === 'Persona Interview') {
+                            return (
+                              <div key={idx} className="mb-2">
+                                <label className="block text-gray-900 mb-1 flex items-start justify-between">
+                                  <span>Interview to Become a Persona</span>
+                                  {hasResponse && <CircleCheck className="w-5 h-5 text-green-600 flex-shrink-0" />}
+                                </label>
+                                {MicDevicePicker}
+                                <button
+                                  onClick={() => setShowPersonaInterviewDialog(true)}
+                                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center justify-center gap-2"
+                                >
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                                  Start Persona Interview
                                 </button>
                                 {responses[activeStepId]?.[idx] && <div className="bg-green-50 border border-green-200 rounded p-2 mt-2"><p className="text-sm text-green-700">✓ {responses[activeStepId][idx]}</p></div>}
                               </div>
@@ -2578,6 +2607,19 @@ export default function ProcessWireframe() {
       {fileSaverData && (
         <DatabricksFileSaver open={showFileSaver} onClose={() => { setShowFileSaver(false); setFileSaverData(null); }} fileName={fileSaverData.fileName} fileContent={fileSaverData.content} onSaveSuccess={(path) => { console.log('File saved successfully to:', path); }} />
       )}
+
+      <PersonaInterviewDialog
+        open={showPersonaInterviewDialog}
+        onClose={() => setShowPersonaInterviewDialog(false)}
+        onComplete={(name) => {
+          handleResponseChange(1, `Persona created: ${name}`);
+          // Refresh custom personas so it immediately appears in Colleagues hex
+          fetchCustomPersonas().then(p => setCustomPersonas(p)).catch(() => {});
+        }}
+        userEmail={userEmail}
+        userRole={userRole}
+        selectedMicDeviceId={selectedMicDeviceId}
+      />
 
       <InterviewDialog open={showInterviewDialog} onClose={() => { setShowInterviewDialog(false); }} onComplete={() => { if (activeStepId === 'Wisdom') { handleResponseChange(1, 'Interview completed and saved to Knowledge Base'); } }} userEmail={userEmail} userRole={userRole} selectedMicDeviceId={selectedMicDeviceId}
         onSaveTranscript={async (transcript: string, fileName: string) => {
