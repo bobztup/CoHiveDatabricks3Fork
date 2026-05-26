@@ -512,12 +512,22 @@ Context: [One paragraph (2–3 sentences) capturing the essence of this persona 
                   </button>
                 )}
               </div>
+              {!readyToEnd && (
+                <div className="bg-indigo-50 border border-indigo-100 rounded p-2.5">
+                  <p className="text-xs text-indigo-700 font-medium mb-1.5">Continue through all 7 sections:</p>
+                  <div className="flex flex-wrap gap-1">
+                    {['A. Warm-up', 'B. Cognitive Style', 'C. Motivations', 'D. Blind Spots', 'E. Communication', 'F. Signature Moves', 'G. Scenarios'].map(s => (
+                      <span key={s} className="px-2 py-0.5 bg-white border border-indigo-200 text-indigo-600 rounded text-xs">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button
                 onClick={handleEndInterview}
                 disabled={isLoading || !readyToEnd}
-                className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-sm"
               >
-                {readyToEnd ? 'End Interview & Create Persona' : `Interview in progress (${exchangeCount}/10 exchanges before you can end)`}
+                {readyToEnd ? 'End Interview & Create Persona' : `End Interview & Create Persona — available after 10 exchanges (${exchangeCount} so far)`}
               </button>
             </div>
           )}
