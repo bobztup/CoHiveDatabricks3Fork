@@ -1870,7 +1870,7 @@ ${iterationDirections.map((d, i) => `${i + 1}. ${d}`).join('\n')}
             brand, personaList, taskDescription, requestMode,
           }),
         }],
-        maxTokens: 700, temperature: 0.5,
+        maxTokens: 1500, temperature: 0.5,
         label: `Moderator Recap R${roundNumber}`,
       });
 
