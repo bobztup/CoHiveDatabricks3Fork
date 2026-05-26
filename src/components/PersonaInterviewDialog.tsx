@@ -71,7 +71,7 @@ export function PersonaInterviewDialog({ open, onClose, onComplete, userEmail, u
     setIsLoading(true);
     setInitError(null);
 
-    const systemPrompt = `You are conducting a personal interview to build an AI persona profile for ${personaName.trim()}.
+    const systemPrompt = `You are conducting a structured personal interview to build an AI persona profile for ${personaName.trim()}.
 
 About the interviewee:
 - Name: ${personaName.trim()}
@@ -79,44 +79,59 @@ About the interviewee:
 - Role in company: ${roleInCompany.trim() || 'not specified'}
 - Business area: ${category}${category === 'Marketing' && subRole ? ` — ${subRole}` : ''}
 
-Your goal is to understand how this person thinks, what they value, how they communicate, and what their biases are — so an AI can accurately simulate their perspective in brand and marketing strategy assessments.
+Your goal is to build a rich, accurate AI persona of this person. Work through the structured questions below in order, one at a time. A brief, natural follow-up on a particularly interesting answer is fine — but keep moving forward through all sections.
 
-Conduct the interview conversationally. Cover these areas (not as a checklist — weave them in naturally):
+STRUCTURED INTERVIEW QUESTIONS:
 
-A. How they think
-- What they value most
-- What they worry about
-- What they notice first in a brief or strategy
-- What they tend to ignore or deprioritize
-- How they make decisions
-- Their "signature moves" or recurring patterns
+Section A — Warm-up (build trust, open the channel)
+1. "Tell me about the kind of work that energises you."
+2. "What's a recent decision you're proud of?"
+3. "What's something people misunderstand about your role?"
 
-B. Role & domain expertise
-- What they know deeply
-- What they're responsible for
-- What they're uniquely good at
+Section B — Cognitive Style (how they think)
+4. "When you're evaluating an idea, what's the first thing you look for?"
+5. "What makes you sceptical?"
+6. "What makes you excited?"
+7. "How do you decide something is 'good enough' versus 'needs more work'?"
 
-C. Communication style
-- Direct or diplomatic?
-- Analytical or intuitive?
-- Big-picture or detail-oriented?
-- Fast or reflective?
+Section C — Motivations & Priorities
+8. "What are you optimising for in your role?"
+9. "What do you protect at all costs?"
+10. "What tradeoffs do you make quickly, and which ones do you agonise over?"
 
-D. Biases (ask gently — frame as "everyone has them")
-- What they might consistently over- or underweight
-- What perspectives they might dismiss too quickly
+Section D — Blind Spots & Biases
+11. "What kinds of ideas do you tend to undervalue?"
+12. "What do people usually push you on?"
+13. "What do you wish you were better at noticing?"
+
+Section E — Communication Style
+14. "How do you like information presented to you?"
+15. "What frustrates you in communication?"
+16. "What's your preferred way to challenge an idea?"
+
+Section F — Signature Moves
+17. "What's something you do instinctively that others don't?"
+18. "What's your default move when things get ambiguous?"
+19. "What's your superpower in this company?"
+
+Section G — Example Scenarios
+Choose 2–3 of these and ask how they'd respond:
+- "A team brings you a half-baked idea with potential. What do you say?"
+- "A project is behind schedule but the concept is strong. How do you react?"
+- "Someone proposes a risky creative leap. What's your instinct?"
 
 Guidelines:
-- Ask one focused question at a time
-- Follow up on interesting answers
-- Keep it warm and conversational — never read out the list above
-- After 15–20 exchanges you'll have a rich picture
-- Begin with a brief warm introduction (1 sentence) and your first question`;
+- Begin with a brief warm introduction (1–2 sentences), then ask Section A Question 1
+- Ask questions in order — do not skip sections
+- Ask ONE question at a time
+- Use ${personaName.trim()}'s name occasionally to keep it personal
+- Frame Section G naturally: "Let me give you a quick scenario…"
+- After Section G, close warmly: thank them by name and let them know their AI persona profile is now being created`;
 
     try {
       const conv = new AIConversation(userEmail, userRole, systemPrompt);
       setConversation(conv);
-      const opening = await conv.ask(`Please introduce yourself briefly (1 sentence) and ask your first question to ${personaName.trim()}.`);
+      const opening = await conv.ask(`Please introduce yourself warmly in 1–2 sentences, then ask Section A, Question 1 to ${personaName.trim()}.`);
       setMessages([{ role: 'assistant', content: opening }]);
     } catch (err: any) {
       setInitError(err.message || 'Failed to start interview');
@@ -282,8 +297,8 @@ Context: [One paragraph (2–3 sentences) capturing the essence of this persona 
 
   if (!open) return null;
 
-  const exchangeCount = Math.floor(messages.filter(m => m.role === 'user').length);
-  const readyToEnd = exchangeCount >= 4;
+  const exchangeCount = messages.filter(m => m.role === 'user').length;
+  const readyToEnd = exchangeCount >= 10;
 
   return (
     <div className="fixed inset-y-0 left-0 z-50 flex items-center justify-center bg-black bg-opacity-50" style={{ right: 'var(--modal-r)', padding: 'var(--modal-p)' }}>
@@ -502,7 +517,7 @@ Context: [One paragraph (2–3 sentences) capturing the essence of this persona 
                 disabled={isLoading || !readyToEnd}
                 className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
-                {readyToEnd ? 'End Interview & Create Persona' : 'Interview in progress...'}
+                {readyToEnd ? 'End Interview & Create Persona' : `Interview in progress (${exchangeCount}/10 exchanges before you can end)`}
               </button>
             </div>
           )}
