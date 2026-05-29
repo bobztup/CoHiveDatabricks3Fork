@@ -545,6 +545,7 @@ flowchart TD
     B --> F[Video]
     B --> G[File]
     B --> H[Interview]
+    B --> I[Persona Interview]
 
     C --> C1[Type insight in textarea\noptional voice-to-text mic icon]
     C1 --> C2[Click Save\nconvert text to .txt file]
@@ -581,24 +582,45 @@ flowchart TD
     H6 --> H7[Save summary as file]
     H7 --> Z
 
+    I --> I1[Form: name, job title\nrole in company, business area]
+    I1 --> I2[AIConversation: persona\ninterview system prompt]
+    I2 --> I3[15–20 exchange interview\ncovering thinking / expertise /\ncomms style / biases]
+    I3 --> I4{User ends\ninterview?}
+    I4 -- No --> I3
+    I4 -- Yes --> I5[executeAIPrompt: synthesise\n7-field persona profile]
+    I5 --> I6[User edits persona\nin textarea]
+    I6 --> I7[saveCustomPersona\nhexIds=Colleagues]
+    I7 --> I8[Persona live in\nColleagues hex for\nall workspace users]
+
     Z[uploadToKnowledgeBase\nfileType=Wisdom\nscope=brand/category/general]
     Z --> AA[File pending processing\nResearch Leader must\nProcess then Approve]
 
     style D2 fill:#fef3c7
     style E1 fill:#fef3c7
     style H4 fill:#fef3c7
+    style I4 fill:#fef3c7
+    style I8 fill:#e0e7ff
 ```
 
 | Element | Description |
 |---|---|
 | User opens Wisdom hex | The knowledge contribution hex. Any authenticated user can add their expert knowledge, field observations, or strategic insights to the Knowledge Base. Designed for capturing tacit knowledge that is not already in a document. |
-| Choose input method | Six capture methods covering different scenarios — from a quick typed note to a structured multi-turn interview. |
+| Choose input method | Seven capture methods covering different scenarios — from a quick typed note to a full persona interview. |
 | Text | Labelled "Text / dictation, unlimited time". For typing an insight directly with no time limit. A microphone icon enables voice-to-text dictation into the textarea. |
 | Voice | Labelled "Voice / audio - 90 seconds". For capturing a spoken insight as an audio file (up to 90 seconds). The recording is transcribed by Whisper-1 when a Research Leader processes the file. |
 | Photo | For capturing physical materials — whiteboard notes, printed documents, visual references. |
 | Video | For capturing presentations, walkthroughs, or demonstrations. |
 | File | For uploading an existing document. Identical to KB upload but tagged as Wisdom input type. |
-| Interview | The richest method. An AI interviewer draws out structured knowledge through a guided multi-turn conversation. |
+| Interview | Labelled "Be Interviewed". An AI interviewer draws out structured knowledge through a guided multi-turn conversation. |
+| Persona Interview | Labelled "Interview to Become a Persona". A structured personal interview that creates a reusable AI persona of the interviewee, available to all workspace users in the Colleagues hex. A descriptive note appears below the option: "Your AI Persona can attempt to ask and answer questions about a strategy as well as make recommendations and assessments." |
+| Form: name, job title, role in company, business area | Phase 1 (pre-interview form). Collects: name (becomes the persona label), job title, role in the company (free text), and business area from a dropdown: Leadership / Product & Engineering / Commercial / Marketing / General. Selecting Marketing reveals a sub-role picker: Insights Manager / Brand Manager / Marketing Manager. |
+| AIConversation: persona interview system prompt | An AIConversation instance is created with a system prompt that frames the AI as a persona interviewer. The prompt includes the interviewee's name, job title, role, and business area, and instructs the AI to cover four categories conversationally. |
+| 15–20 exchange interview | The AI conducts a natural multi-turn interview covering: (A) How they think — values, worries, decision style, signature moves; (B) Role & domain expertise — deep knowledge, responsibilities, unique strengths; (C) Communication style — direct/diplomatic, analytical/intuitive, big-picture/detail-oriented, fast/reflective; (D) Biases — what they over- or underweight, perspectives they dismiss. Voice + text input supported. "End Interview & Create Persona" becomes active after 4 user exchanges. |
+| User ends interview? | The user clicks "End Interview & Create Persona" when satisfied. The AI delivers a warm closing, then synthesis begins. |
+| executeAIPrompt: synthesise 7-field persona | A second one-shot AI call (not a conversation) takes the full transcript and generates a structured persona with 7 sections: 1. Identity, 2. Cognitive Style, 3. Motivations, 4. Blind Spots, 5. Voice & Tone, 6. Behavioural Rules, 7. Example Outputs. A Context paragraph (2–3 sentences) is also generated for display in the Colleagues hex picker. |
+| User edits persona in textarea | The generated profile is shown in a monospace editable textarea. The user can refine any section before saving. The note at the top of the dialog reads: "Review and edit your profile, then save to make it available in the Colleagues hex." |
+| saveCustomPersona hexIds=Colleagues | The persona is saved to the `custom_personas` Databricks table with hexIds="Colleagues", name=personaName, and content_json containing the full structured text plus category, subRole, jobTitle, roleInCompany, context, and createdVia="persona-interview". |
+| Persona live in Colleagues hex for all workspace users | On save, ProcessWireframe refreshes customPersonas via fetchCustomPersonas(). The persona immediately appears in the Colleagues hex persona picker with a grey category/sub-role badge next to the "Custom" blue badge. |
 | Type insight in textarea — optional voice-to-text mic | The user types their insight. A microphone icon enables voice dictation into the text field for hands-free input. |
 | Click Save — convert text to .txt file | The typed content is packaged as a plain text file and passed to the upload pipeline. |
 | Click Start Recording — browser requests microphone | The browser's getUserMedia API is called. The user must grant microphone access before recording begins. |
@@ -620,7 +642,7 @@ flowchart TD
 | AI generates structured summary | Once the interview concludes, the AI synthesises the full conversation transcript into a well-structured document capturing the key insights in an organised format. |
 | User edits summary if desired | The generated summary is shown in an editable text area. The user can refine wording, add detail, or remove anything before saving. |
 | Save summary as file | The final edited summary is uploaded to the Knowledge Base as a document. |
-| uploadToKnowledgeBase — fileType=Wisdom, scope=brand/category/general | All six input methods converge here. The content is uploaded with Wisdom as the file type and the user's chosen scope: brand-specific insight, category-level observation, or general industry knowledge. |
+| uploadToKnowledgeBase — fileType=Wisdom, scope=brand/category/general | The six knowledge input methods (Text, Voice, Photo, Video, File, Interview) converge here. The content is uploaded with Wisdom as the file type and the user's chosen scope: brand-specific insight, category-level observation, or general industry knowledge. |
 | File pending processing — Research Leader must Process then Approve | Wisdom files follow the same processing and approval pipeline as all other KB files. They are not immediately usable in hex assessments until a Research Leader processes and approves them. |
 | Video submission note | For brand video footage (events, in-use demonstrations), users are directed to email help@cohivesolutions.com or share via a link with filename and address/URL. This note appears below all input method options in the Wisdom hex. |
 
@@ -1101,6 +1123,51 @@ flowchart TD
 | buildStoryContextBlock | A function in api/databricks/assessment/run.js. It reads the most recent stories execution, extracts the synopsis (if any) as the lead, then appends up to 2000 characters of full story text, plus the selected values, emotions, category, and subtype. The block is formatted with ━━━ dividers and labeled headers. |
 | storyTaskPrefix (mode-specific) | A short instruction injected before the normal taskDescription in the assessment prompt. In load-ideas / Assess mode: "A brand story has been created... assess it as advertising." In get-inspired mode: "A brand story has been created... develop it into a campaign." The prefix steers the persona's frame of reference before the main task instructions. |
 | Story block injected into persona prompt | The story context replaces the generic hex iteration context for that execution — personas receive it as a primary subject, not just background. They are directed to work on or assess the story rather than generate unrelated ideas. |
+
+---
+
+## 18. Role Management: CoHive vs Client Users
+
+```mermaid
+flowchart TD
+    A([User logs in via OAuth]) --> B[fetchUserEmail sets userEmail state]
+    B --> C{Is email\n@cohivesolutions.com?}
+
+    C -- Yes --> D[isCohiveUser = true\nManage Templates button visible]
+    D --> E[User selects template\nsetUserRole from template.role]
+    E --> F[Role changes freely\nwith template selection]
+
+    C -- No --> G[isCohiveUser = false\nManage Templates button hidden]
+    G --> H[fetchDatabricksRole\ncalls /api/databricks/user-role]
+    H --> I[GET user-role.js:\ncalls getRoleForEmail with OAuth token]
+    I --> J{user_roles table\nresolution}
+    J -- Exact email match --> K[role = email row]
+    J -- Domain match --> L[role = domain row]
+    J -- No match --> M[role = marketing-manager default]
+    K --> N[setDatabricksRole + setUserRole]
+    L --> N
+    M --> N
+    N --> O[Role locked — template changes\ndo not override it]
+
+    style D fill:#dbeafe
+    style G fill:#fef3c7
+    style O fill:#dcfce7
+```
+
+| Element | Description |
+|---|---|
+| fetchUserEmail sets userEmail state | After successful Databricks OAuth authentication, getCurrentUserEmail() fetches the user's email from the Databricks SCIM /Me endpoint. The email is stored in ProcessWireframe's userEmail state and drives all role decisions. |
+| Is email @cohivesolutions.com? | The isCohiveUser flag is computed inline: `userEmail.toLowerCase().endsWith('@cohivesolutions.com')`. CoHive internal users always get template-managed roles for operational flexibility. Client users always get Databricks-managed roles for security. |
+| Manage Templates button visible | For CoHive internal users only, the "Manage Templates" sidebar button is rendered. It opens the TemplateManager component which allows switching between templates — and changing the active role. The button is unconditionally hidden for all non-cohivesolutions users. |
+| User selects template, setUserRole from template.role | When a CoHive user picks a different template, the template-change useEffect calls `setUserRole(template.role)`. CoHive users can freely move between administrator, research-leader, marketing-manager, etc. for testing and demo purposes. |
+| fetchDatabricksRole calls /api/databricks/user-role | For non-cohivesolutions users, a useEffect fires when userEmail is set. It calls the GET `/api/databricks/user-role` endpoint, passing userEmail, the OAuth access token, and workspaceHost as query parameters. |
+| GET user-role.js: calls getRoleForEmail | The serverless function at `api/databricks/user-role.js` calls `getRoleForEmail(email, workspaceHost, accessToken, warehouseId, schema)` from `api/utils/userRole.js`. This uses the user's own OAuth token (not the server PAT), so it works correctly even if the DATABRICKS_TOKEN has expired. |
+| user_roles table resolution | getRoleForEmail queries `knowledge_base.{schema}.user_roles` where `match_value IN (email, domain)` ordered by match_type: email rows win over domain rows. Cached in-memory for 5 minutes per cold start. |
+| Exact email match | A row with match_type='email' and match_value equal to the user's full email address. Highest priority — overrides any domain-level rule. Used to give or restrict access for a specific person. |
+| Domain match | A row with match_type='domain' and match_value equal to the user's email domain (e.g. 'nike.com'). Applies to all users on that domain who don't have a specific email-level override. |
+| No match → marketing-manager default | If neither email nor domain has a row in user_roles, the hard-coded fallback 'marketing-manager' is returned. This ensures new users always get a sensible default rather than an error. |
+| setDatabricksRole + setUserRole | Both state variables are updated. `databricksRole` holds the resolved string as a reference. `userRole` (the live value used for feature gating) is set to the same value. |
+| Role locked — template changes do not override it | The template-change useEffect checks `isCohiveUser` before calling `setUserRole(template.role)`. For non-cohivesolutions users, if `databricksRole` is set, it is applied instead — meaning template switches can never escalate or change a client user's role. |
 
 ---
 

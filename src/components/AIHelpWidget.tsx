@@ -210,13 +210,24 @@ const HELP_MANUAL: Record<string, { guess: string; steps: string[] }> = {
   Wisdom: {
     guess: "contribute wisdom or insights to the Knowledge Base",
     steps: [
-      "Step 1: Choose your input method — Text / dictation (unlimited time), Voice / audio (90 seconds), Photo, File, or Be Interviewed.",
+      "Step 1: Choose your input method — Text / dictation (unlimited time), Voice / audio (90 seconds), Photo, File, Be Interviewed, or Interview to Become a Persona.",
       "Text / dictation, unlimited time: Type your insight and click Save. Use the microphone icon for voice-to-text dictation with no time limit.",
       "Voice / audio - 90 seconds: Click Start Recording, speak (up to 90 seconds), click Stop — saves as an audio file and is transcribed by Whisper when processed.",
       "File: Upload any document up to 37MB (PDF, Word, Excel, etc.).",
       "Be Interviewed: An AI interviewer asks targeted questions, transcribes your answers, generates a structured summary you can edit before saving.",
+      "Interview to Become a Persona: A structured personal interview that creates an AI persona of you — available in the Colleagues hex for all workspace users. Enter your name (the persona label), job title, role in the company, and business area (Leadership, Product & Engineering, Commercial, Marketing, or General). The AI conducts a 15–20 exchange interview covering how you think, your domain expertise, your communication style, and your biases. It then generates a 7-field structured persona profile (Identity, Cognitive Style, Motivations, Blind Spots, Voice & Tone, Behavioural Rules, Example Outputs) that you can edit before saving. Your persona is immediately available to all users in the Colleagues hex.",
       "Video: If you have a video of the brand in use or at an event, send it to help@cohivesolutions.com, or load it into a share drive and send a note with the filename and address/URL.",
       "All wisdom saves to the Knowledge Base. A Research Leader must then process and approve it before others can use it in hex analyses.",
+    ],
+  },
+  roles: {
+    guess: "understand how user roles work in CoHive",
+    steps: [
+      "Roles control which features are available: administrator, research-leader, research-analyst, data-scientist, marketing-manager, product-manager, executive-stakeholder.",
+      "CoHive internal users (@cohivesolutions.com): Roles are set by selecting a template via the 'Manage Templates' button in the sidebar. The Manage Templates button is only visible to cohivesolutions.com users.",
+      "Client users (all other email addresses): Roles are assigned in the Databricks user_roles table by an administrator. The role is fetched automatically on login and cannot be changed from the app — switching templates does not affect your role.",
+      "Role resolution priority: exact email match first, then email domain match, then the default (marketing-manager).",
+      "If your role appears wrong, ask your workspace administrator to check your entry in the user_roles table (user_roles API: GET /api/databricks/config/user-roles).",
     ],
   },
   Findings: {

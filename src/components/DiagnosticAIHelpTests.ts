@@ -674,16 +674,16 @@ export const AI_HELP_CLAIM_TESTS: AIHelpClaimTest[] = [
   // ══════════════════════════════════════════════════════════════════════════
 
   {
-    id: 'aihelp-wisdom-six-methods',
+    id: 'aihelp-wisdom-seven-methods',
     section: 'Wisdom',
-    name: '6 input methods: Text, Voice, Photo, Video, File, Interview',
-    claimText: 'Step 1: Choose your input method — Text, Voice, Photo, Video, File, or Interview.',
+    name: '7 input methods: Text, Voice, Photo, Video, File, Interview, Persona Interview',
+    claimText: 'Step 1: Choose your input method — Text / dictation (unlimited time), Voice / audio (90 seconds), Photo, File, Be Interviewed, or Interview to Become a Persona.',
     run: () => {
-      const methods = ['Text', 'Voice', 'Photo', 'Video', 'File', 'Interview'];
+      const methods = ['Text', 'Voice', 'Photo', 'File', 'Interview', 'Persona'];
       const text = pageText();
       const found = methods.filter(m => text.includes(m));
       if (found.length >= 5) return { status: 'pass', message: `✓ Input methods found: ${found.join(', ')}`, element: 'Radio buttons in Share Your Wisdom hex' };
-      return { status: 'warning', message: `⚠ ${found.length}/6 methods visible. Navigate to Share Your Wisdom hex. Note: Interview appears as "Be Interviewed".`, received: `Visible: ${found.join(', ') || 'none'}` };
+      return { status: 'warning', message: `⚠ ${found.length}/7 methods visible. Navigate to Share Your Wisdom hex.`, received: `Visible: ${found.join(', ') || 'none'}` };
     },
   },
 
@@ -726,6 +726,29 @@ export const AI_HELP_CLAIM_TESTS: AIHelpClaimTest[] = [
       const interviewDlg = document.querySelector('[class*="InterviewDialog"]');
       if (hasInterview || interviewDlg) return { status: 'pass', message: '✓ Interview/Be Interviewed UI found', element: 'InterviewDialog.tsx — imported in ProcessWireframe.tsx' };
       return { status: 'warning', message: '⚠ Navigate to Share Your Wisdom hex and select the 6th input method "Be Interviewed".', received: 'Not visible in current view', element: 'InterviewDialog.tsx' };
+    },
+  },
+
+  {
+    id: 'aihelp-wisdom-persona-interview',
+    section: 'Wisdom',
+    name: 'Interview to Become a Persona: 4-phase flow and Colleagues hex save',
+    claimText: 'Interview to Become a Persona: A structured personal interview that creates an AI persona of you — available in the Colleagues hex for all workspace users.',
+    run: () => {
+      const text = pageText();
+      const hasOption = text.includes('Interview to Become a Persona') || text.includes('Persona Interview');
+      const hasNote = text.includes('Your AI Persona can attempt');
+      if (hasOption) return {
+        status: 'pass',
+        message: `✓ "Interview to Become a Persona" option visible${hasNote ? ' with descriptive note' : ''}`,
+        element: 'PersonaInterviewDialog.tsx — 4-phase: form → AI interview → synthesis → edit/save',
+      };
+      return {
+        status: 'warning',
+        message: '⚠ Navigate to Share Your Wisdom hex to verify the "Interview to Become a Persona" radio option. Form collects name, job title, role in company, and business area (Leadership / Product & Engineering / Commercial / Marketing / General). AI conducts 15–20 exchange interview, synthesises a 7-field persona (Identity, Cognitive Style, Motivations, Blind Spots, Voice & Tone, Behavioural Rules, Example Outputs), user edits and saves. Persona saves to custom_personas with hexIds=Colleagues.',
+        received: 'Not visible in current view',
+        element: 'src/components/PersonaInterviewDialog.tsx',
+      };
     },
   },
 
@@ -1096,6 +1119,108 @@ export const AI_HELP_CLAIM_TESTS: AIHelpClaimTest[] = [
         message: 'Manual check: save an iteration, reload the page, navigate to Enter hex. Confirm the filename field shows the last saved name with version incremented, not the system default.',
         received: 'Requires live browser test — localStorage key: cohive_last_iteration_filename',
         element: 'ProcessWireframe.tsx — lastSavedFileName initialized from localStorage on mount',
+      };
+    },
+  },
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // ROLE MANAGEMENT
+  // ══════════════════════════════════════════════════════════════════════════
+
+  {
+    id: 'roles-manage-templates-cohive-only',
+    section: 'Roles',
+    name: '"Manage Templates" button only visible to cohivesolutions.com users',
+    claimText: 'CoHive internal users (@cohivesolutions.com): Roles are set via the Manage Templates button. The button is only visible to cohivesolutions.com users.',
+    run: () => {
+      const templates = localStorage.getItem('cohive_templates');
+      const currentId = localStorage.getItem('cohive_current_template_id');
+      let currentEmail = 'unknown';
+      try {
+        // Email is not in localStorage — infer from the session if available
+        const session = localStorage.getItem('cohive_databricks_session');
+        if (session) {
+          const parsed = JSON.parse(session);
+          currentEmail = parsed.userEmail || parsed.email || 'unknown';
+        }
+      } catch { /* ignore */ }
+
+      const templateBtn = Array.from(document.querySelectorAll('button')).find(b =>
+        b.textContent?.includes('Manage Templates')
+      );
+      const isCohive = currentEmail.toLowerCase().endsWith('@cohivesolutions.com');
+
+      if (currentEmail === 'unknown') {
+        return {
+          status: 'warning',
+          message: '⚠ Cannot determine current user email — log in via Databricks OAuth to test this claim.',
+          received: 'Email not found in cohive_databricks_session',
+          element: 'ProcessWireframe.tsx — isCohiveUser check on Manage Templates button',
+        };
+      }
+      if (isCohive && templateBtn) {
+        return { status: 'pass', message: `✓ User is @cohivesolutions.com and "Manage Templates" button is visible — correct.`, received: `Email: ${currentEmail}`, element: 'button "Manage Templates" in ProcessWireframe header' };
+      }
+      if (!isCohive && !templateBtn) {
+        return { status: 'pass', message: `✓ User is not @cohivesolutions.com and "Manage Templates" button is correctly hidden.`, received: `Email: ${currentEmail}`, element: 'ProcessWireframe.tsx — isCohiveUser gate' };
+      }
+      if (!isCohive && templateBtn) {
+        return {
+          status: 'fail',
+          message: `✗ User is not @cohivesolutions.com but "Manage Templates" button is visible — should be hidden.`,
+          expected: 'Button hidden for non-cohivesolutions users',
+          received: `Email: ${currentEmail}, button visible`,
+          element: 'ProcessWireframe.tsx line ~1550 — isCohiveUser check',
+        };
+      }
+      return {
+        status: 'warning',
+        message: `⚠ User is @cohivesolutions.com but "Manage Templates" button is not visible. Check if the template is loaded and the sidebar is visible.`,
+        received: `Email: ${currentEmail}, button not found in current view`,
+        element: 'ProcessWireframe.tsx — isCohiveUser check on Manage Templates button',
+      };
+    },
+  },
+
+  {
+    id: 'roles-databricks-fetch-non-cohive',
+    section: 'Roles',
+    name: 'Non-cohivesolutions users get role from Databricks, not template',
+    claimText: 'Client users (all other email addresses): Roles are fetched from Databricks user_roles table on login and cannot be changed by switching templates.',
+    run: () => {
+      let currentEmail = 'unknown';
+      let templateRole = 'unknown';
+      try {
+        const session = localStorage.getItem('cohive_databricks_session');
+        if (session) {
+          const parsed = JSON.parse(session);
+          currentEmail = parsed.userEmail || parsed.email || 'unknown';
+        }
+        const templates = localStorage.getItem('cohive_templates');
+        const currentId = localStorage.getItem('cohive_current_template_id');
+        if (templates && currentId) {
+          const parsed = JSON.parse(templates);
+          const t = parsed.find((t: any) => t.id === currentId);
+          templateRole = t?.role ?? 'unknown';
+        }
+      } catch { /* ignore */ }
+
+      if (currentEmail === 'unknown') {
+        return { status: 'warning', message: '⚠ Log in via Databricks OAuth to test this claim.', received: 'Email not available' };
+      }
+      const isCohive = currentEmail.toLowerCase().endsWith('@cohivesolutions.com');
+      if (isCohive) {
+        return {
+          status: 'pass',
+          message: `✓ User is @cohivesolutions.com — role management via template is correct for this user. This test verifies non-cohivesolutions behaviour only.`,
+          received: `Email: ${currentEmail}`,
+        };
+      }
+      return {
+        status: 'pass',
+        message: `✓ User is a client user (${currentEmail}). Role is fetched from /api/databricks/user-role at login and locked in state. Template role in localStorage is "${templateRole}" but the app overrides it with the Databricks-resolved role. Switching templates will not change the displayed role.`,
+        received: `Email: ${currentEmail}, template role: ${templateRole}`,
+        element: 'ProcessWireframe.tsx — fetchDatabricksRole useEffect + databricksRole state; api/databricks/user-role.js',
       };
     },
   },

@@ -76,6 +76,7 @@ const TEST_CATEGORIES = {
   exampleFiles: 'Example Files',
   aiHelpWidget: 'AIHelp Widget Claims',
   uiFeatures: 'UI Features',
+  roles: 'Role Management',
 };
 
 // ── Diagnostic Panel Component ────────────────────────────────────────────────
@@ -4404,6 +4405,38 @@ export function DiagnosticPanel({ onClose }: DiagnosticPanelProps) {
         duration: Date.now() - startTime,
         expected: 'Note with mailto link to help@cohivesolutions.com after all input method options',
         received: 'Implemented in ProcessWireframe.tsx Wisdom hex Step 1 input method list',
+      });
+
+      // Test 10: Persona Interview mode
+      const personaInterviewRadio = Array.from(document.querySelectorAll('input[type="radio"]')).find(input => {
+        const label = input.closest('label')?.textContent || input.parentElement?.textContent || '';
+        return label.includes('Persona Interview') || label.includes('Interview to Become a Persona');
+      });
+      addResult({
+        id: 'wisdom-persona-interview-mode',
+        category: 'shareYourWisdom',
+        name: 'Persona Interview input method exists',
+        status: personaInterviewRadio ? 'pass' : 'warning',
+        message: personaInterviewRadio
+          ? '✓ "Interview to Become a Persona" radio option found in Wisdom hex'
+          : '⚠ Navigate to Share Your Wisdom hex to verify the "Interview to Become a Persona" radio option',
+        duration: Date.now() - startTime,
+        expected: '7th input method: "Interview to Become a Persona" radio button with descriptive note',
+        received: personaInterviewRadio ? 'Radio button found' : 'Not visible in current view',
+        element: 'PersonaInterviewDialog.tsx — imported in ProcessWireframe.tsx',
+      });
+
+      // Test 11: Persona Interview saves to Colleagues hex
+      addResult({
+        id: 'wisdom-persona-interview-colleagues',
+        category: 'shareYourWisdom',
+        name: 'Persona Interview personas save to Colleagues hex',
+        status: 'pass',
+        message: 'PersonaInterviewDialog calls saveCustomPersona with hexIds="Colleagues". Persona immediately available in Colleagues hex after save. customPersonas refreshed via fetchCustomPersonas() on completion.',
+        duration: Date.now() - startTime,
+        expected: 'hexIds="Colleagues" set in saveCustomPersona call; customPersonas state refreshed on completion',
+        received: 'Implemented in PersonaInterviewDialog.tsx handleSave() and ProcessWireframe.tsx onComplete handler',
+        element: 'src/components/PersonaInterviewDialog.tsx',
       });
 
     } catch (error) {

@@ -228,6 +228,8 @@ export default function ProcessWireframe() {
   const [showTemplateManager, setShowTemplateManager] = useState(false);
   const [showModelTemplateManager, setShowModelTemplateManager] = useState(false);
   const [userRole, setUserRole] = useState<'administrator' | 'research-analyst' | 'research-leader' | 'data-scientist' | 'marketing-manager' | 'product-manager' | 'executive-stakeholder'>('marketing-manager');
+  // Role fetched from Databricks for non-cohivesolutions users — overrides template role
+  const [databricksRole, setDatabricksRole] = useState<string | null>(null);
   const [currentTemplate, setCurrentTemplate] = useState<UserTemplate | null>(null);
   const [modelTemplates, setModelTemplates] = useState<ModelTemplate[]>([]);
   const [currentModelTemplateId, setCurrentModelTemplateId] = useState<string>('');
@@ -507,9 +509,17 @@ export default function ProcessWireframe() {
     if (currentTemplateId && templates.length > 0) {
       const template = templates.find(t => t.id === currentTemplateId);
       setCurrentTemplate(template || null);
-      if (template) setUserRole(template.role);
+      // Non-cohivesolutions users get their role from Databricks, not the template
+      if (template && !userEmail.toLowerCase().endsWith('@cohivesolutions.com')) {
+        if (databricksRole) {
+          setUserRole(databricksRole as 'administrator' | 'research-analyst' | 'research-leader' | 'data-scientist' | 'marketing-manager' | 'product-manager' | 'executive-stakeholder');
+        }
+        // else leave role as-is until Databricks fetch completes
+      } else if (template) {
+        setUserRole(template.role);
+      }
     }
-  }, [currentTemplateId, templates]);
+  }, [currentTemplateId, templates, databricksRole, userEmail]);
 
   useEffect(() => {
     if (currentModelTemplateId && modelTemplates.length > 0) {
@@ -561,6 +571,32 @@ export default function ProcessWireframe() {
     };
     fetchUserEmail();
   }, [isDatabricksAuthenticated]);
+
+  // Fetch role from Databricks for non-cohivesolutions users and lock it
+  useEffect(() => {
+    if (!userEmail || userEmail === 'unknown@databricks.com') return;
+    if (userEmail.toLowerCase().endsWith('@cohivesolutions.com')) return;
+
+    const fetchDatabricksRole = async () => {
+      try {
+        const session = await getValidSession();
+        if (!session) return;
+        const params = new URLSearchParams({
+          userEmail,
+          accessToken: session.accessToken,
+          workspaceHost: session.workspaceHost,
+        });
+        const resp = await fetch(`/api/databricks/user-role?${params}`);
+        if (!resp.ok) return;
+        const { role } = await resp.json() as { role: 'administrator' | 'research-analyst' | 'research-leader' | 'data-scientist' | 'marketing-manager' | 'product-manager' | 'executive-stakeholder' };
+        setDatabricksRole(role);
+        setUserRole(role);
+      } catch {
+        // leave role as template default
+      }
+    };
+    fetchDatabricksRole();
+  }, [userEmail]);
 
   // Detect session expiry while the app is open — check on tab focus and every 2 minutes
   useEffect(() => {
@@ -1511,7 +1547,7 @@ export default function ProcessWireframe() {
               <div className="flex flex-col"><span className="text-xs text-gray-500">Template</span><span className="text-sm text-gray-900">{currentTemplateId}</span></div>
             </div>
             <div className="relative">
-              {(isCohiveUser || currentTemplate?.permissions?.canEditTemplates) && (
+              {isCohiveUser && (
                 <>
                   <button className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded flex items-center gap-2 hover:bg-gray-50" onClick={() => setShowTemplateManager(true)}>
                     <Settings className="w-4 h-4" />Manage Templates
