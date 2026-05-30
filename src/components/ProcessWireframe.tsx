@@ -1553,7 +1553,7 @@ export default function ProcessWireframe() {
               <div className="flex flex-col"><span className="text-xs text-gray-500">Template</span><span className="text-sm text-gray-900">{currentTemplateId}</span></div>
             </div>
             <div className="relative">
-              {(isCohiveUser || currentTemplate?.permissions?.canEditTemplates) && (
+              {isDatabricksAuthenticated && (
                 <>
                   <button className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded flex items-center gap-2 hover:bg-gray-50" onClick={() => setShowTemplateManager(true)}>
                     <Settings className="w-4 h-4" />Manage Templates
