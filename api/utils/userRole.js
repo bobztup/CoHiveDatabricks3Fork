@@ -88,6 +88,28 @@ export async function getRoleForEmail(email, workspaceHost, accessToken, warehou
 }
 
 /**
+ * Resolve role using an OAuth token — calls Databricks SCIM /Me to get the
+ * true email for the token, then runs normal getRoleForEmail logic.
+ * Use this instead of getRoleForEmail when you have a user OAuth token and
+ * want the server to independently verify the caller's identity.
+ */
+export async function getRoleForOAuthToken(oauthToken, workspaceHost, warehouseId, schema) {
+  if (!oauthToken || !workspaceHost) return DEFAULT_ROLE;
+  try {
+    const scimResp = await fetch(`https://${workspaceHost}/api/2.0/preview/scim/v2/Me`, {
+      headers: { Authorization: `Bearer ${oauthToken}` },
+    });
+    if (!scimResp.ok) return DEFAULT_ROLE;
+    const scimData = await scimResp.json();
+    const email = scimData.emails?.[0]?.value || scimData.userName || '';
+    if (!email) return DEFAULT_ROLE;
+    return getRoleForEmail(email, workspaceHost, oauthToken, warehouseId, schema);
+  } catch {
+    return DEFAULT_ROLE;
+  }
+}
+
+/**
  * Returns true if the resolved role is in the allowed set.
  */
 export function roleIsAllowed(role, allowedRoles) {

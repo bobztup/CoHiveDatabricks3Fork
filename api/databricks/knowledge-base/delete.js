@@ -10,7 +10,7 @@
 
 import { getDatabricksConfig } from '../../utils/validateEnv.js';
 import { logFileEvent, logError } from '../../utils/logger.js';
-import { getRoleForEmail, roleIsAllowed, ROLES_DELETE_FILES } from '../../utils/userRole.js';
+import { getRoleForEmail, getRoleForOAuthToken, roleIsAllowed, ROLES_DELETE_FILES } from '../../utils/userRole.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'DELETE') {
@@ -29,12 +29,11 @@ export default async function handler(req, res) {
       });
     }
 
-    // Prefer the user's own OAuth token for role lookup so that domain-based
-    // rules (e.g. @cohivesolutions.com → administrator) apply correctly even
-    // when the server PAT belongs to a service account with a different domain.
-    const lookupToken = oauthToken || accessToken;
-    const lookupHost  = oauthWorkspaceHost || workspaceHost;
-    const resolvedRole = await getRoleForEmail(userEmail, lookupHost, lookupToken, warehouseId, schema);
+    // If the client passes an OAuth token, use it to verify identity server-side
+    // via Databricks SCIM — this avoids trusting the client-supplied userEmail.
+    const resolvedRole = oauthToken
+      ? await getRoleForOAuthToken(oauthToken, oauthWorkspaceHost || workspaceHost, warehouseId, schema)
+      : await getRoleForEmail(userEmail, workspaceHost, accessToken, warehouseId, schema);
     if (!roleIsAllowed(resolvedRole, ROLES_DELETE_FILES)) {
       return res.status(403).json({
         error: 'Access denied',

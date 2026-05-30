@@ -9,7 +9,7 @@
 
 import { getDatabricksConfig } from '../../utils/validateEnv.js';
 import { logFileEvent, logError } from '../../utils/logger.js';
-import { getRoleForEmail, roleIsAllowed, ROLES_APPROVE_RESEARCH } from '../../utils/userRole.js';
+import { getRoleForEmail, getRoleForOAuthToken, roleIsAllowed, ROLES_APPROVE_RESEARCH } from '../../utils/userRole.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -34,9 +34,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const lookupToken = oauthToken || accessToken;
-    const lookupHost  = oauthWorkspaceHost || workspaceHost;
-    const resolvedRole = await getRoleForEmail(userEmail, lookupHost, lookupToken, warehouseId, schema);
+    const resolvedRole = oauthToken
+      ? await getRoleForOAuthToken(oauthToken, oauthWorkspaceHost || workspaceHost, warehouseId, schema)
+      : await getRoleForEmail(userEmail, workspaceHost, accessToken, warehouseId, schema);
     if (!roleIsAllowed(resolvedRole, ROLES_APPROVE_RESEARCH)) {
       return res.status(403).json({
         error: 'Access denied',
