@@ -18,7 +18,7 @@ export default async function handler(req, res) {
 
   try {
     const { workspaceHost, accessToken, warehouseId, schema } = getDatabricksConfig();
-    const { fileId, userEmail } = req.body;
+    const { fileId, userEmail, oauthToken, oauthWorkspaceHost } = req.body;
 
     if (!fileId || !userEmail) {
       return res.status(400).json({
@@ -27,7 +27,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const resolvedRole = await getRoleForEmail(userEmail, workspaceHost, accessToken, warehouseId, schema);
+    const lookupToken = oauthToken || accessToken;
+    const lookupHost  = oauthWorkspaceHost || workspaceHost;
+    const resolvedRole = await getRoleForEmail(userEmail, lookupHost, lookupToken, warehouseId, schema);
     if (!roleIsAllowed(resolvedRole, ROLES_APPROVE_RESEARCH)) {
       return res.status(403).json({
         error: 'Access denied',

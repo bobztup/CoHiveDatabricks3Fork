@@ -23,6 +23,8 @@ export default async function handler(req, res) {
       fileId,
       approvalNotes = '',
       userEmail,
+      oauthToken,
+      oauthWorkspaceHost,
     } = req.body;
 
     if (!fileId || !userEmail) {
@@ -32,7 +34,9 @@ export default async function handler(req, res) {
       });
     }
 
-    const resolvedRole = await getRoleForEmail(userEmail, workspaceHost, accessToken, warehouseId, schema);
+    const lookupToken = oauthToken || accessToken;
+    const lookupHost  = oauthWorkspaceHost || workspaceHost;
+    const resolvedRole = await getRoleForEmail(userEmail, lookupHost, lookupToken, warehouseId, schema);
     if (!roleIsAllowed(resolvedRole, ROLES_APPROVE_RESEARCH)) {
       return res.status(403).json({
         error: 'Access denied',

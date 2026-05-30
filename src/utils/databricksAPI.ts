@@ -188,10 +188,10 @@ export async function approveKnowledgeBaseFile(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('✅ Approving file:', fileId);
-    const auth = await getAuthData();
+    const session = await getValidSession();
     const response = await fetch('/api/databricks/knowledge-base/approve', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId, approvalNotes, userEmail, userRole }),
+      body: JSON.stringify({ fileId, approvalNotes, userEmail, userRole, oauthToken: session?.accessToken, oauthWorkspaceHost: session?.workspaceHost }),
     });
     if (!response.ok) { const errorData = await response.json().catch(() => ({})); throw new Error(errorData.error || `Approval failed: ${response.statusText}`); }
     const result = await response.json();
@@ -213,11 +213,11 @@ export async function unapproveKnowledgeBaseFile(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     console.log('↩️ Unapproving file:', fileId);
-    const auth = await getAuthData();
+    const session = await getValidSession();
     const response = await fetch('/api/databricks/knowledge-base/unapprove', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId, userEmail, userRole }),
+      body: JSON.stringify({ fileId, userEmail, userRole, oauthToken: session?.accessToken, oauthWorkspaceHost: session?.workspaceHost }),
     });
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
@@ -272,10 +272,10 @@ export async function deleteKnowledgeBaseFile(
   fileId: string, userEmail: string, userRole: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const auth = await getAuthData();
+    const session = await getValidSession();
     const response = await fetch('/api/databricks/knowledge-base/delete', {
       method: 'DELETE', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fileId, userEmail, userRole }),
+      body: JSON.stringify({ fileId, userEmail, userRole, oauthToken: session?.accessToken, oauthWorkspaceHost: session?.workspaceHost }),
     });
     if (!response.ok) { const errorData = await response.json().catch(() => ({})); throw new Error(errorData.error || `Deletion failed: ${response.statusText}`); }
     return { success: true };
