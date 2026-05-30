@@ -509,17 +509,18 @@ export default function ProcessWireframe() {
     if (currentTemplateId && templates.length > 0) {
       const template = templates.find(t => t.id === currentTemplateId);
       setCurrentTemplate(template || null);
-      // Non-cohivesolutions users get their role from Databricks, not the template
-      if (template && !userEmail.toLowerCase().endsWith('@cohivesolutions.com')) {
+      if (template?.permissions?.canEditTemplates) {
+        // Users whose template grants canEditTemplates can switch roles freely
+        setUserRole(template.role);
+      } else if (template) {
+        // All other users get their role from Databricks — template.role is ignored
         if (databricksRole) {
           setUserRole(databricksRole as 'administrator' | 'research-analyst' | 'research-leader' | 'data-scientist' | 'marketing-manager' | 'product-manager' | 'executive-stakeholder');
         }
-        // else leave role as-is until Databricks fetch completes
-      } else if (template) {
-        setUserRole(template.role);
+        // else leave role as-is until the Databricks fetch completes
       }
     }
-  }, [currentTemplateId, templates, databricksRole, userEmail]);
+  }, [currentTemplateId, templates, databricksRole]);
 
   useEffect(() => {
     if (currentModelTemplateId && modelTemplates.length > 0) {
@@ -572,10 +573,9 @@ export default function ProcessWireframe() {
     fetchUserEmail();
   }, [isDatabricksAuthenticated]);
 
-  // Fetch role from Databricks for non-cohivesolutions users and lock it
+  // Fetch role from Databricks for users whose template does not grant canEditTemplates
   useEffect(() => {
     if (!userEmail || userEmail === 'unknown@databricks.com') return;
-    if (userEmail.toLowerCase().endsWith('@cohivesolutions.com')) return;
 
     const fetchDatabricksRole = async () => {
       try {
@@ -1547,7 +1547,7 @@ export default function ProcessWireframe() {
               <div className="flex flex-col"><span className="text-xs text-gray-500">Template</span><span className="text-sm text-gray-900">{currentTemplateId}</span></div>
             </div>
             <div className="relative">
-              {isCohiveUser && (
+              {(isCohiveUser || currentTemplate?.permissions?.canEditTemplates) && (
                 <>
                   <button className="w-full px-4 py-2 border-2 border-gray-400 text-gray-700 rounded flex items-center gap-2 hover:bg-gray-50" onClick={() => setShowTemplateManager(true)}>
                     <Settings className="w-4 h-4" />Manage Templates
