@@ -95,15 +95,24 @@ export async function getRoleForEmail(email, workspaceHost, accessToken, warehou
  */
 export async function getRoleForOAuthToken(oauthToken, workspaceHost, warehouseId, schema) {
   if (!oauthToken || !workspaceHost) return DEFAULT_ROLE;
+  // Strip any accidental https:// prefix that may have been stored in the session
+  const host = workspaceHost.replace(/^https?:\/\//, '').replace(/\/$/, '');
   try {
-    const scimResp = await fetch(`https://${workspaceHost}/api/2.0/preview/scim/v2/Me`, {
+    const scimResp = await fetch(`https://${host}/api/2.0/preview/scim/v2/Me`, {
       headers: { Authorization: `Bearer ${oauthToken}` },
     });
     if (!scimResp.ok) return DEFAULT_ROLE;
     const scimData = await scimResp.json();
+
+    // Databricks workspace admins (in the 'admins' group) always get administrator
+    const isWorkspaceAdmin = Array.isArray(scimData.groups) &&
+      scimData.groups.some(g => g.display === 'admins' || g.value === 'admins');
+    if (isWorkspaceAdmin) return 'administrator';
+
+    // Fall back to email-based role resolution
     const email = scimData.emails?.[0]?.value || scimData.userName || '';
     if (!email) return DEFAULT_ROLE;
-    return getRoleForEmail(email, workspaceHost, oauthToken, warehouseId, schema);
+    return getRoleForEmail(email, host, oauthToken, warehouseId, schema);
   } catch {
     return DEFAULT_ROLE;
   }
