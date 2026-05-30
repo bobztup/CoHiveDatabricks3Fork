@@ -440,16 +440,22 @@ export default function ProcessWireframe() {
     const savedTemplates = localStorage.getItem('cohive_templates');
     if (savedTemplates) {
       try {
-        const tmpl = JSON.parse(savedTemplates);
+        let tmpl: UserTemplate[] = JSON.parse(savedTemplates);
+        // Merge default permissions into stored templates so new properties (e.g.
+        // canEditTemplates) are always present even in older localStorage versions.
+        tmpl = tmpl.map(t => {
+          const def = defaultTemplates.find(d => d.id === t.id);
+          if (!def) return t;
+          return { ...t, permissions: { ...def.permissions, ...t.permissions } };
+        });
+        // Add data-scientist template if missing (legacy migration)
         const hasDataScientist = tmpl.some((t: UserTemplate) => t.id === 'data-scientist');
         if (!hasDataScientist) {
           const ds = defaultTemplates.find(t => t.id === 'data-scientist');
-          if (ds) {
-            const updated = [...tmpl, ds];
-            setTemplates(updated);
-            localStorage.setItem('cohive_templates', JSON.stringify(updated));
-          } else { setTemplates(tmpl); }
-        } else { setTemplates(tmpl); }
+          if (ds) tmpl = [...tmpl, ds];
+        }
+        setTemplates(tmpl);
+        localStorage.setItem('cohive_templates', JSON.stringify(tmpl));
       } catch (e) {
         setTemplates(defaultTemplates);
         localStorage.setItem('cohive_templates', JSON.stringify(defaultTemplates));
